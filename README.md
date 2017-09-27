@@ -18,7 +18,7 @@ Nevertheless there are limited resources on how to handle xsd validation in go, 
 As libxml2-dev is needed, as a reference how I installed the latest sources on my system (Ubuntu):
 
 
-	curl -sL <a href="ftp://xmlsoft.org/libxml2/libxml2-2.9.5.tar.gz">ftp://xmlsoft.org/libxml2/libxml2-2.9.5.tar.gz</a> | tar -xzf -
+	curl -sL ftp://xmlsoft.org/libxml2/libxml2-2.9.5.tar.gz | tar -xzf -
 	cd ./libxml2-2.9.5/
 	./configure --prefix=/usr  --enable-static --with-threads --with-history
 	make
