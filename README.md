@@ -1,7 +1,6 @@
 
 
 # xsdvalidate
-`import "/home/ubuntu/source/go/src/github.com/terminalstatic/go-xsd-validate"`
 
 * [Overview](#pkg-overview)
 * [Index](#pkg-index)
