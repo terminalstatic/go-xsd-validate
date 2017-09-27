@@ -84,13 +84,13 @@ On the other hand you prabably want to call xsdvalidate.Init() and xsdvalidate.C
 	}
 
 #### <a name="pkg-files">Package files</a>
-[libxml2.go](/src/target/libxml2.go) [validate_xsd.go](/src/target/validate_xsd.go) 
+[libxml2.go](/libxml2.go) [validate_xsd.go](/validate_xsd.go) 
 
 
 
 
 
-## <a name="Cleanup">func</a> [Cleanup](/src/target/validate_xsd.go?s=1251:1265#L37)
+## <a name="Cleanup">func</a> [Cleanup](/validate_xsd.go?s=1251:1265#L37)
 ``` go
 func Cleanup()
 ```
@@ -98,7 +98,7 @@ Cleans up the libxml2 parser, use this when application ends or parser is not ne
 
 
 
-## <a name="Init">func</a> [Init](/src/target/validate_xsd.go?s=1075:1086#L31)
+## <a name="Init">func</a> [Init](/validate_xsd.go?s=1075:1086#L31)
 ``` go
 func Init()
 ```
@@ -107,7 +107,7 @@ Initializes the libxml2 parser, suggested for multithreading.
 
 
 
-## <a name="Param">type</a> [Param](/src/target/validate_xsd.go?s=867:883#L23)
+## <a name="Param">type</a> [Param](/validate_xsd.go?s=867:883#L23)
 ``` go
 type Param uint8
 ```
@@ -128,7 +128,7 @@ Parameter constant(s) for possible future use, e.g. parser error detail level.
 
 
 
-## <a name="XmlHandler">type</a> [XmlHandler](/src/target/libxml2.go?s=3907:3953#L174)
+## <a name="XmlHandler">type</a> [XmlHandler](/libxml2.go?s=3907:3953#L174)
 ``` go
 type XmlHandler struct {
     // contains filtered or unexported fields
@@ -142,7 +142,7 @@ Handles xml parsing, wraps a pointer to libxml2's xmlDocPtr.
 
 
 
-### <a name="NewXmlHandlerMem">func</a> [NewXmlHandlerMem](/src/target/validate_xsd.go?s=1531:1600#L45)
+### <a name="NewXmlHandlerMem">func</a> [NewXmlHandlerMem](/validate_xsd.go?s=1531:1600#L45)
 ``` go
 func NewXmlHandlerMem(inXml []byte, param Param) (*XmlHandler, error)
 ```
@@ -154,7 +154,7 @@ The go garbage collector will not collect the allocated resources.
 
 
 
-### <a name="XmlHandler.Free">func</a> (\*XmlHandler) [Free](/src/target/validate_xsd.go?s=2778:2814#L78)
+### <a name="XmlHandler.Free">func</a> (\*XmlHandler) [Free](/validate_xsd.go?s=2778:2814#L78)
 ``` go
 func (xmlHandler *XmlHandler) Free()
 ```
@@ -163,7 +163,7 @@ Frees the xml docPtr, call this when handler is not needed anymore.
 
 
 
-## <a name="XsdHandler">type</a> [XsdHandler](/src/target/libxml2.go?s=3789:3841#L169)
+## <a name="XsdHandler">type</a> [XsdHandler](/libxml2.go?s=3789:3841#L169)
 ``` go
 type XsdHandler struct {
     // contains filtered or unexported fields
@@ -177,7 +177,7 @@ Handles schema parsing and validation, wraps a pointer to libxml2's xmlSchemaPtr
 
 
 
-### <a name="NewXsdHandlerUrl">func</a> [NewXsdHandlerUrl](/src/target/validate_xsd.go?s=1862:1929#L53)
+### <a name="NewXsdHandlerUrl">func</a> [NewXsdHandlerUrl](/validate_xsd.go?s=1862:1929#L53)
 ``` go
 func NewXsdHandlerUrl(url string, param Param) (*XsdHandler, error)
 ```
@@ -189,7 +189,7 @@ The go garbage collector will not collect the allocated resources.
 
 
 
-### <a name="XsdHandler.Free">func</a> (\*XsdHandler) [Free](/src/target/validate_xsd.go?s=2638:2674#L73)
+### <a name="XsdHandler.Free">func</a> (\*XsdHandler) [Free](/validate_xsd.go?s=2638:2674#L73)
 ``` go
 func (xsdHandler *XsdHandler) Free()
 ```
@@ -198,7 +198,7 @@ Frees the schemaPtr, call this when handler is not needed anymore.
 
 
 
-### <a name="XsdHandler.Validate">func</a> (\*XsdHandler) [Validate](/src/target/validate_xsd.go?s=2170:2251#L60)
+### <a name="XsdHandler.Validate">func</a> (\*XsdHandler) [Validate](/validate_xsd.go?s=2170:2251#L60)
 ``` go
 func (xsdHandler *XsdHandler) Validate(xmlHandler *XmlHandler, param Param) error
 ```
