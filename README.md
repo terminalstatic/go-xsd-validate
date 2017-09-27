@@ -42,7 +42,47 @@ As libxml2-dev is needed, as a reference how I installed the latest sources on m
   * [func (xsdHandler *XsdHandler) Validate(xmlHandler *XmlHandler, param Param) error](#XsdHandler.Validate)
 
 #### <a name="pkg-examples">Examples</a>
-* [Package](#example_)
+An example on how to use the api.
+Always bear in mind to free the handlers, the go gc will not collect those.
+On the other hand you prabably want to call xsdvalidate.Init() and xsdvalidate.Cleanup() only once after app start and before app end.
+
+
+	import (
+	"fmt"
+	"io/ioutil"
+	"os"
+	"github.com/terminalstatic/go-xsd-validate"
+	)
+
+	func Example() {
+		xsdvalidate.Init()
+		defer xsdvalidate.Cleanup()
+		xsdhandler, err := xsdvalidate.NewXsdHandlerUrl("examples/test1_split.xsd", xsdvalidate.ParserDefault)
+		if err != nil {
+			panic(err)
+		}
+		defer xsdhandler.Free()
+		xmlFile, err := os.Open("examples/test1_pass.xml")
+		if err != nil {
+			panic(err)
+		}
+		defer xmlFile.Close()
+		inXml, err := ioutil.ReadAll(xmlFile)
+		if err != nil {
+			panic(err)
+		}
+		xmlhandler, err := xsdvalidate.NewXmlHandlerMem(inXml, xsdvalidate.ParserDefault)
+		if err != nil {
+			panic(err)
+		}
+		defer xmlhandler.Free()
+		err = xsdhandler.Validate(xmlhandler, xsdvalidate.ParserDefault)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println("Validation OK")
+		// Output: Validation OK
+	}
 
 #### <a name="pkg-files">Package files</a>
 [libxml2.go](/src/target/libxml2.go) [validate_xsd.go](/src/target/validate_xsd.go) 
