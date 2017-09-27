@@ -48,10 +48,10 @@ On the other hand you prabably want to call xsdvalidate.Init() and xsdvalidate.C
 
 
 	import (
-	"fmt"
-	"io/ioutil"
-	"os"
-	"github.com/terminalstatic/go-xsd-validate"
+		"fmt"
+		"io/ioutil"
+		"os"
+		"github.com/terminalstatic/go-xsd-validate"
 	)
 
 	func Example() {
