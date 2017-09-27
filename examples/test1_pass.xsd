@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<xs:element name="shiporder">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="orderperson"/>
+				<xs:element name="shipto">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="name"/>
+							<xs:element name="address"/>
+							<xs:element name="city"/>
+							<xs:element name="country"/>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="item" maxOccurs="unbounded">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="title"/>
+							<xs:element name="note" minOccurs="0"/>
+							<xs:element name="quantity" />
+							<xs:element name="price" />
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+			</xs:sequence>
+			<xs:attribute name="orderid" use="required"/>
+		</xs:complexType>
+	</xs:element>
+</xs:schema>
