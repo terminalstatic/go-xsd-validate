@@ -6,7 +6,6 @@
 * [Overview](#pkg-overview)
 * [Index](#pkg-index)
 * [Examples](#pkg-examples)
-* [Subdirectories](#pkg-subdirectories)
 
 ## <a name="pkg-overview">Overview</a>
 A simple package for xsd validation, wraps libxml2.
