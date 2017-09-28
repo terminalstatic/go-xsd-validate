@@ -26,6 +26,16 @@ typedef struct {
 void noOutputCallback(void *ctx, const char *message, ...) {
 }
 
+void init() {
+	xmlInitParser();
+	xmlLineNumbersDefault(1);
+}
+
+void cleanup() {
+	xmlSchemaCleanupTypes();
+	xmlCleanupParser();
+}
+
 void genErrorCallback(void *ctx, const char *message, ...) {
 	errCtx *tctx=(errCtx *) ctx;
 	char *newLine = malloc(GO_ERR_INIT);
@@ -44,7 +54,7 @@ void genErrorCallback(void *ctx, const char *message, ...) {
 	va_end(varArgs);
 
 	char *tmp = malloc(oldLen + lineLen);
-	strcpy(tmp, tctx->errBuf);
+	memcpy(tmp, tctx->errBuf, oldLen);
 	strcat(tmp, newLine);
 	free(tctx->errBuf);
 	tctx->errBuf = tmp;
@@ -55,7 +65,7 @@ static xsdParserResult cParseUrlSchema(const char *url) {
 	xsdParserResult parserResult;
 	char *errBuf=NULL;
 	errCtx *ectx=malloc(sizeof(errCtx));
-	ectx->errBuf=calloc(sizeof(char), GO_ERR_INIT);;
+	ectx->errBuf=calloc(GO_ERR_INIT, sizeof(char));
 
 	xmlSchemaPtr schema = NULL;
 	xmlSchemaParserCtxtPtr schemaParserCtxt = NULL;
@@ -70,10 +80,17 @@ static xsdParserResult cParseUrlSchema(const char *url) {
 
 	xmlSchemaFreeParserCtxt(schemaParserCtxt);
 
-	if (schema == NULL) errno = -1;
+	if (schema == NULL) {
+		char prefix[] = "Malformed xsd document: ";
+		errBuf=malloc(strlen(prefix) + strlen(ectx->errBuf)+1);
+		memcpy(errBuf, prefix, strlen(prefix) + 1);
+		strcat(errBuf, ectx->errBuf);
+		strcpy(ectx->errBuf, "Malformed xsd document");
+		errno = -1;
+	} else {
+		errBuf = calloc(1, sizeof(char));
+	}
 
-	errBuf=calloc(sizeof(char), strlen(ectx->errBuf)+1);
-	strcpy(errBuf, ectx->errBuf);
 	free(ectx->errBuf);
 	free(ectx);
 	parserResult.schemaPtr=schema;
@@ -86,7 +103,7 @@ static xmlParserResult cParseDoc(char *goXmlSource, int goXmlSourceLen) {
 	xmlParserResult parserResult;
 	char *errBuf=NULL;
 	errCtx *ectx=malloc(sizeof(errCtx));
-	ectx->errBuf=calloc(sizeof(char), GO_ERR_INIT);;
+	ectx->errBuf=calloc(GO_ERR_INIT, sizeof(char));;
 
 	xmlDocPtr doc=NULL;
 	xmlParserCtxtPtr xmlParserCtxt=NULL;
@@ -100,10 +117,13 @@ static xmlParserResult cParseDoc(char *goXmlSource, int goXmlSourceLen) {
 
 	xmlFreeParserCtxt(xmlParserCtxt);
 
-	if (doc == NULL) errno = -1;
+	if (doc == NULL) {
+		strcpy(ectx->errBuf, "Malformed xml document");
+		errno = -1;
+	}
 
-	errBuf=calloc(sizeof(char), strlen(ectx->errBuf)+1);
-	strcpy(errBuf, ectx->errBuf);
+	errBuf=malloc(strlen(ectx->errBuf)+1);
+	memcpy(errBuf,  ectx->errBuf, strlen(ectx->errBuf)+1);
 	free(ectx->errBuf);
 	free(ectx);
 	parserResult.docPtr=doc;
@@ -114,16 +134,16 @@ static xmlParserResult cParseDoc(char *goXmlSource, int goXmlSourceLen) {
 static char *cValidate(xmlDocPtr doc, xmlSchemaPtr schema) {
 	char *errBuf=NULL;
 	errCtx *ectx=malloc(sizeof(errCtx));
-	ectx->errBuf=calloc(sizeof(char), GO_ERR_INIT);;
+	ectx->errBuf=calloc(GO_ERR_INIT, sizeof(char));
 	int schemaErr=0;
 
 	if (schema == NULL) {
 		errno = -1;
-		strcpy(ectx->errBuf, "Error xsd schema: null pointer");
+		strcpy(ectx->errBuf, "Xsd schema null pointer");
 	}
 	else if (doc == NULL) {
 		errno = -1;
-		strcpy(ectx->errBuf, "Error xml schema: null pointer");
+		strcpy(ectx->errBuf, "Xml schema null pointer");
 	}
 	else
 	{
@@ -146,13 +166,13 @@ static char *cValidate(xmlDocPtr doc, xmlSchemaPtr schema) {
 		else
 		{
 			errno = -1;
-			strcpy(ectx->errBuf, "Xml validation generated an internal error\n");
+			strcpy(ectx->errBuf, "Xml validation internal error\n");
 		}
 
 	}
 
-	errBuf=calloc(sizeof(char), strlen(ectx->errBuf)+1);
-	strcpy(errBuf, ectx->errBuf);
+	errBuf=calloc(strlen(ectx->errBuf)+1, sizeof(char));
+	memcpy(errBuf,  ectx->errBuf, strlen(ectx->errBuf)+1);
 	free(ectx->errBuf);
 	free(ectx);
 	return errBuf;
@@ -177,14 +197,12 @@ type XmlHandler struct {
 
 // Initializes the libxml2 parser, suggested for multithreading
 func libXml2Init() {
-	C.xmlInitParser()
-	C.xmlLineNumbersDefault(1)
+	C.init()
 }
 
 // Cleans up the libxml2 parser
 func libXml2Cleanup() {
-	C.xmlSchemaCleanupTypes()
-	C.xmlCleanupParser()
+	C.cleanup()
 }
 
 // The helper function for parsing xml
