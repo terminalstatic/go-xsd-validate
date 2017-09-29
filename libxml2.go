@@ -71,7 +71,7 @@ static xsdParserResult cParseUrlSchema(const char *url) {
 	xmlSchemaParserCtxtPtr schemaParserCtxt = NULL;
 
 	//xmlSetGenericErrorFunc(ectx, genErrorCallback);
-	xmlSetGenericErrorFunc(noOutputCallback, noOutputCallback);
+	xmlSetGenericErrorFunc(NULL, noOutputCallback);
 
 	schemaParserCtxt = xmlSchemaNewParserCtxt(url);
 	xmlSchemaSetParserErrors(schemaParserCtxt, genErrorCallback, noOutputCallback, ectx);
@@ -109,7 +109,7 @@ static xmlParserResult cParseDoc(char *goXmlSource, int goXmlSourceLen) {
 	xmlParserCtxtPtr xmlParserCtxt=NULL;
 
 	//xmlSetGenericErrorFunc(ectx, genErrorCallback);
-	xmlSetGenericErrorFunc(noOutputCallback, noOutputCallback);
+	xmlSetGenericErrorFunc(NULL, noOutputCallback);
 
 	xmlParserCtxt = xmlNewParserCtxt();
 
