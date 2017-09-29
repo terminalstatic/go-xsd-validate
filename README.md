@@ -12,10 +12,10 @@ A simple package for xsd validation, wraps libxml2.
 The rationale behind this package is to provide a way to preload xsd files and use their memory representations to validate
 incoming xml documents in a concurrent environment, eg. the post bodys of xml service endpoints.
 
-Currently this package aims to be a proof of concept and is not used in production.
-Nevertheless there are limited resources on how to handle xsd validation in go, so this might be helpful for someone.
+Currently this package aims to be a proof of concept and is not yet used in production.
+Nevertheless there are limited resources on how to handle xsd validation in go, so this might be helpful for somebody.
 
-As libxml2-dev is needed, this is an example how to install the latest sources (Ubuntu, change prefix according to where your libs and include files are located):
+As libxml2-dev is needed, this is an example how to install the latest sources (Ubuntu, change prefix according to where libs and include files are located):
 
 
 	curl -sL ftp://xmlsoft.org/libxml2/libxml2-2.9.5.tar.gz | tar -xzf -
