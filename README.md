@@ -15,7 +15,7 @@ incoming xml documents in a concurrent environment, eg. the post bodys of xml se
 Currently this package aims to be a proof of concept and is not used in production.
 Nevertheless there are limited resources on how to handle xsd validation in go, so this might be helpful for someone.
 
-As libxml2-dev is needed, as a reference how I installed the latest sources on my system (Ubuntu):
+As libxml2-dev is needed, this is an example how to install the latest sources (Ubuntu, change prefix according to where your libs and include files are located):
 
 
 	curl -sL ftp://xmlsoft.org/libxml2/libxml2-2.9.5.tar.gz | tar -xzf -
@@ -41,8 +41,8 @@ As libxml2-dev is needed, as a reference how I installed the latest sources on m
 
 #### <a name="pkg-examples">Examples</a>
 An example on how to use the api.
-Always bear in mind to free the handlers, the go gc will not collect those.
-On the other hand you prabably want to call xsdvalidate.Init() and xsdvalidate.Cleanup() only once after app start and before app end.
+Always bear in mind to free the handlers, the go gc will not collect those. In some situations, e.g. programatically looping over xml documents you might have to explicitly free the handler without defer.
+You prabably want to call xsdvalidate.Init() and xsdvalidate.Cleanup() only once after app start and before app end.
 
 
 	import (
@@ -101,7 +101,7 @@ Cleans up the libxml2 parser, use this when application ends or parser is not ne
 ``` go
 func Init()
 ```
-Initializes the libxml2 parser, suggested for multithreading.
+Initializes the libxml2 parser, according to libxml's instructions for thread safety.
 
 
 
