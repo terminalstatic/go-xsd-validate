@@ -7,6 +7,7 @@ package xsdvalidate
 #include <errno.h>
 #include <malloc.h>
 #define GO_ERR_INIT 256
+#define P_ERR_EXT 2
 #define LIBXML_STATIC
 
 struct xsdParserResult {
@@ -61,17 +62,16 @@ static void genErrorCallback(void *ctx, const char *message, ...) {
 	free(newLine);
 }
 
-static struct xsdParserResult cParseUrlSchema(const char *url) {
+static struct xsdParserResult cParseUrlSchema(const char *url, const short int options) {
 	struct xsdParserResult parserResult;
 	char *errBuf=NULL;
 	struct errCtx *ectx=malloc(sizeof(struct errCtx));
 	ectx->errBuf=calloc(GO_ERR_INIT, sizeof(char));
+	struct errCtx *genEctx=malloc(sizeof(struct errCtx));;
+	genEctx->errBuf=calloc(GO_ERR_INIT, sizeof(char));
 
 	xmlSchemaPtr schema = NULL;
 	xmlSchemaParserCtxtPtr schemaParserCtxt = NULL;
-
-	//xmlSetGenericErrorFunc(ectx, genErrorCallback);
-	xmlSetGenericErrorFunc(NULL, noOutputCallback);
 
 	schemaParserCtxt = xmlSchemaNewParserCtxt(url);
 
@@ -81,46 +81,58 @@ static struct xsdParserResult cParseUrlSchema(const char *url) {
 	}
 	else
 	{
+		if (options & P_ERR_EXT) {
+			xmlSetGenericErrorFunc(genEctx, genErrorCallback);
+		} else {
+			xmlSetGenericErrorFunc(NULL, noOutputCallback);
+		}
+
 		xmlSchemaSetParserErrors(schemaParserCtxt, genErrorCallback, noOutputCallback, ectx);
 
 		schema = xmlSchemaParse(schemaParserCtxt);
 
 		xmlSchemaFreeParserCtxt(schemaParserCtxt);
-
 		if (schema == NULL) {
 			errno = -1;
-			char *prefix = "Malformed xsd document: ";
-			char *tmp = malloc(strlen(prefix) + strlen(ectx->errBuf)+1);
-			memcpy(tmp, prefix, strlen(prefix) + 1);
-			strcat(tmp, ectx->errBuf);
+			char *prefix = "Malformed xsd document: \n";
+			char *tmp = NULL;
+			if (options & P_ERR_EXT) {
+				tmp = (char *) malloc(strlen(prefix) + strlen(ectx->errBuf) + strlen(genEctx->errBuf) + 1);
+				memcpy(tmp, prefix, strlen(prefix) + 1);
+				strcat(tmp, ectx->errBuf);
+				strcat(tmp, genEctx->errBuf);
+			} else {
+				tmp = (char *) malloc(strlen(prefix) + strlen(ectx->errBuf) + 1);
+				memcpy(tmp, prefix, strlen(prefix) + 1);
+				strcat(tmp, ectx->errBuf);
+			}
 			free(ectx->errBuf);
 			ectx->errBuf = tmp;
 		} else {
 			errBuf = calloc(1, sizeof(char));
 		}
 	}
-
 	errBuf=malloc(strlen(ectx->errBuf)+1);
 	memcpy(errBuf,  ectx->errBuf, strlen(ectx->errBuf)+1);
+
 	free(ectx->errBuf);
 	free(ectx);
+	free(genEctx->errBuf);
+	free(genEctx);
 	parserResult.schemaPtr=schema;
 	parserResult.errorStr=errBuf;
 	return parserResult;
-
 }
 
-static struct xmlParserResult cParseDoc(const char *goXmlSource, const int goXmlSourceLen) {
+static struct xmlParserResult cParseDoc(const char *goXmlSource, const int goXmlSourceLen, const short int options) {
 	struct xmlParserResult parserResult;
 	char *errBuf=NULL;
 	struct errCtx *ectx=malloc(sizeof(struct errCtx));
 	ectx->errBuf=calloc(GO_ERR_INIT, sizeof(char));;
 
+
 	xmlDocPtr doc=NULL;
 	xmlParserCtxtPtr xmlParserCtxt=NULL;
-
-	//xmlSetGenericErrorFunc(ectx, genErrorCallback);
-	xmlSetGenericErrorFunc(NULL, noOutputCallback);
 
 	xmlParserCtxt = xmlNewParserCtxt();
 
@@ -130,13 +142,29 @@ static struct xmlParserResult cParseDoc(const char *goXmlSource, const int goXml
 	}
 	else
 	{
+		if (options & P_ERR_EXT) {
+			xmlSetGenericErrorFunc(ectx, genErrorCallback);
+		} else {
+			xmlSetGenericErrorFunc(NULL, noOutputCallback);
+		}
+
 		doc = xmlParseMemory(goXmlSource, goXmlSourceLen);
 
 		xmlFreeParserCtxt(xmlParserCtxt);
 
 		if (doc == NULL) {
-			errno = -1;
-			strcpy(ectx->errBuf, "Malformed xml document");
+			if (options & P_ERR_EXT) {
+				errno = -1;
+				char *prefix = "Malformed xml document: \n";
+				char *tmp = malloc(strlen(prefix) + strlen(ectx->errBuf) + 1);
+				memcpy(tmp, prefix, strlen(prefix) + 1);
+				strcat(tmp, ectx->errBuf);
+				free(ectx->errBuf);
+				ectx->errBuf = tmp;
+			} else {
+				errno = -1;
+				strcpy(ectx->errBuf, "Malformed xml document");
+			}
 		}
 	}
 
@@ -231,11 +259,11 @@ func libXml2Cleanup() {
 }
 
 // The helper function for parsing xml
-func parseXmlMem(inXml []byte) (C.xmlDocPtr, error) {
+func parseXmlMem(inXml []byte, options Options) (C.xmlDocPtr, error) {
 
 	strXml := C.CString(string(inXml))
 	defer C.free(unsafe.Pointer(strXml))
-	pRes, err := C.cParseDoc(strXml, C.int(len(inXml)))
+	pRes, err := C.cParseDoc(strXml, C.int(len(inXml)), C.short(options))
 
 	defer C.free(unsafe.Pointer(pRes.errorStr))
 	if err != nil {
@@ -246,11 +274,11 @@ func parseXmlMem(inXml []byte) (C.xmlDocPtr, error) {
 }
 
 // The helper function for parsing the schema
-func parseUrlSchema(url string) (C.xmlSchemaPtr, error) {
+func parseUrlSchema(url string, options Options) (C.xmlSchemaPtr, error) {
 	strUrl := C.CString(url)
 	defer C.free(unsafe.Pointer(strUrl))
 
-	pRes, err := C.cParseUrlSchema(strUrl)
+	pRes, err := C.cParseUrlSchema(strUrl, C.short(options))
 	defer C.free(unsafe.Pointer(pRes.errorStr))
 	if err != nil {
 		rStr := C.GoString(pRes.errorStr)

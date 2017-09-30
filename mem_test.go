@@ -25,8 +25,8 @@ func TestMemParseXsd(t *testing.T) {
 		guard <- struct{}{}
 		wg.Add(1)
 		go func() {
-			handler, err := NewXsdHandlerUrl("examples/test1_fail.xsd", ParserDefault)
-			//handler, err := NewXsdHandlerUrl("examples/test1_pass.xsd", ParserDefault)
+			//handler, err := NewXsdHandlerUrl("examples/test1_fail.xsd", ParsErrVerbose)
+			handler, err := NewXsdHandlerUrl("examples/test1_pass.xsd", ParsErrVerbose)
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -67,7 +67,8 @@ func TestMemParseXml(t *testing.T) {
 		guard <- struct{}{}
 		wg.Add(1)
 		go func(inXml []byte) {
-			xmlhandler, err := NewXmlHandlerMem(inXml, ParserDefault)
+			//xmlhandler, err := NewXmlHandlerMem(inXml, ParsErrDefault)
+			xmlhandler, err := NewXmlHandlerMem(inXml, ParsErrVerbose)
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -104,7 +105,7 @@ func TestMemValidate(t *testing.T) {
 		return
 	}
 
-	xsdhandler, err := NewXsdHandlerUrl("examples/test1_pass.xsd", ParserDefault)
+	xsdhandler, err := NewXsdHandlerUrl("examples/test1_pass.xsd", ParsErrDefault)
 	if err != nil {
 		panic(err)
 	}
@@ -115,11 +116,11 @@ func TestMemValidate(t *testing.T) {
 		guard <- struct{}{}
 		wg.Add(1)
 		go func(inXml []byte) {
-			xmlhandler, err := NewXmlHandlerMem(inXml, ParserDefault)
+			xmlhandler, err := NewXmlHandlerMem(inXml, ParsErrDefault)
 			if err != nil {
 				panic(err)
 			}
-			err = xsdhandler.Validate(xmlhandler, ParserDefault)
+			err = xsdhandler.Validate(xmlhandler, ValidErrDefault)
 			if err != nil {
 				log.Print(err)
 			}

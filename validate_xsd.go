@@ -1,12 +1,10 @@
-// A simple package for xsd validation, wraps libxml2.
+// A simple package for xsd validation, uses libxml2.
 //
-// The rationale behind this package is to provide a way to preload xsd files and use their memory representations to validate
-// incoming xml documents in a concurrent environment, eg. the post bodys of xml service endpoints.
+// The rationale behind this package is to preload xsd files and use their in-memory structure to validate incoming xml documents in a concurrent environment, eg. the post bodys of xml service endpoints and also return useful error messages when appropriate.
 //
-// Currently this package aims to be a proof of concept and is not used in production.
-// Nevertheless there are limited resources on how to handle xsd validation in go, so this might be helpful for someone.
+// This package is part of a rewrite of a legacy online service I'm currently working on and is not yet used in production. Nevertheless there are limited resources on how to handle xsd validation in go, so this might be useful for somebody.
 //
-// As libxml2-dev is needed, as a reference how I installed the latest sources on my system (Ubuntu):
+// As libxml2-dev is needed, this is an example how to install the latest sources (Ubuntu, change prefix according to where libs and include files are located):
 //  curl -sL ftp://xmlsoft.org/libxml2/libxml2-2.9.5.tar.gz | tar -xzf -
 //  cd ./libxml2-2.9.5/
 //  ./configure --prefix=/usr  --enable-static --with-threads --with-history
@@ -20,11 +18,18 @@ import (
 	"log"
 )
 
-type Param uint8
+// The Options type, currently used for log level.
+type Options int16
 
-//Parameter constant(s) for possible future use, e.g. parser error detail level.
+// The parser options, ParsErrVerbose will slow down parsing considerably!
 const (
-	ParserDefault Param = 1 << iota
+	ParsErrDefault Options = 1 << iota // Default parser error output
+	ParsErrVerbose                     // Verbose parser error output, considerably slower!
+)
+
+// Validation options.
+const (
+	ValidErrDefault Options = 1 << iota // Default validation error output
 )
 
 // Initializes the libxml2 parser, suggested for multithreading.
@@ -33,7 +38,7 @@ func Init() {
 	libXml2Init()
 }
 
-// Cleans up the libxml2 parser, use this when application ends or parser is not needed anymore.
+// Cleans up the libxml2 parser, use this when application ends or libxml2 is not needed anymore.
 func Cleanup() {
 	log.Printf("Cleaning up the libxml2 parser")
 	libXml2Cleanup()
@@ -42,22 +47,22 @@ func Cleanup() {
 // Initialize the xml handler struct.
 // Always use the Free() method when done using this handler or memory will be leaking.
 // The go garbage collector will not collect the allocated resources.
-func NewXmlHandlerMem(inXml []byte, param Param) (*XmlHandler, error) {
-	xPtr, err := parseXmlMem(inXml)
+func NewXmlHandlerMem(inXml []byte, options Options) (*XmlHandler, error) {
+	xPtr, err := parseXmlMem(inXml, options)
 	return &XmlHandler{xPtr}, err
 }
 
 // Initialize the xml handler struct.
 // Always use Free() method when done using this handler or memory will be leaking.
 // The go garbage collector will not collect the allocated resources.
-func NewXsdHandlerUrl(url string, param Param) (*XsdHandler, error) {
-	sPtr, err := parseUrlSchema(url)
+func NewXsdHandlerUrl(url string, options Options) (*XsdHandler, error) {
+	sPtr, err := parseUrlSchema(url, options)
 	return &XsdHandler{sPtr}, err
 }
 
 // The validation method validates an xmlHandler against an xsdHandler and returns the libxml2 validation error text.
 // Both xmlHandler and xsdHandler have to be created first with the appropriate New... functions.
-func (xsdHandler *XsdHandler) Validate(xmlHandler *XmlHandler, param Param) error {
+func (xsdHandler *XsdHandler) Validate(xmlHandler *XmlHandler, options Options) error {
 	if xsdHandler == nil || xsdHandler.schemaPtr == nil {
 		return errors.New("Xsd handler not properly initialized, use 'New...'")
 
@@ -69,12 +74,12 @@ func (xsdHandler *XsdHandler) Validate(xmlHandler *XmlHandler, param Param) erro
 
 }
 
-// Frees the schemaPtr, call this when handler is not needed anymore.
+// Frees the schemaPtr, call this when this handler is not needed anymore.
 func (xsdHandler *XsdHandler) Free() {
 	freeSchemaPtr(xsdHandler)
 }
 
-// Frees the xml docPtr, call this when handler is not needed anymore.
+// Frees the xml docPtr, call this when this handler is not needed anymore.
 func (xmlHandler *XmlHandler) Free() {
 	freeDocPtr(xmlHandler)
 }

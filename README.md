@@ -1,24 +1,24 @@
 
 
 # xsdvalidate
+`import "github.com/terminalstatic/go-xsd-validate"`
 
 * [Overview](#pkg-overview)
 * [Index](#pkg-index)
 * [Examples](#pkg-examples)
+* [Subdirectories](#pkg-subdirectories)
 
 ## <a name="pkg-overview">Overview</a>
-A simple package for xsd validation, wraps libxml2.
+A simple package for xsd validation, uses libxml2.
 
-The rationale behind this package is to provide a way to preload xsd files and use their memory representations to validate
-incoming xml documents in a concurrent environment, eg. the post bodys of xml service endpoints.
+The rationale behind this package is to preload xsd files and use their in-memory structure to validate incoming xml documents in a concurrent environment, eg. the post bodys of xml service endpoints and also return useful error messages when appropriate.
 
-Currently this package aims to be a proof of concept and is not yet used in production.
-Nevertheless there are limited resources on how to handle xsd validation in go, so this might be helpful for somebody.
+This package is part of a rewrite of a legacy online service I'm currently working on and is not yet used in production. Nevertheless there are limited resources on how to handle xsd validation in go, so this might be useful for somebody.
 
 As libxml2-dev is needed, this is an example how to install the latest sources (Ubuntu, change prefix according to where libs and include files are located):
 
 
-	curl -sL ftp://xmlsoft.org/libxml2/libxml2-2.9.5.tar.gz | tar -xzf -
+	curl -sL <a href="ftp://xmlsoft.org/libxml2/libxml2-2.9.5.tar.gz">ftp://xmlsoft.org/libxml2/libxml2-2.9.5.tar.gz</a> | tar -xzf -
 	cd ./libxml2-2.9.5/
 	./configure --prefix=/usr  --enable-static --with-threads --with-history
 	make
@@ -30,20 +30,19 @@ As libxml2-dev is needed, this is an example how to install the latest sources (
 ## <a name="pkg-index">Index</a>
 * [func Cleanup()](#Cleanup)
 * [func Init()](#Init)
-* [type Param](#Param)
+* [type Options](#Options)
 * [type XmlHandler](#XmlHandler)
-  * [func NewXmlHandlerMem(inXml []byte, param Param) (*XmlHandler, error)](#NewXmlHandlerMem)
+  * [func NewXmlHandlerMem(inXml []byte, options Options) (*XmlHandler, error)](#NewXmlHandlerMem)
   * [func (xmlHandler *XmlHandler) Free()](#XmlHandler.Free)
 * [type XsdHandler](#XsdHandler)
-  * [func NewXsdHandlerUrl(url string, param Param) (*XsdHandler, error)](#NewXsdHandlerUrl)
+  * [func NewXsdHandlerUrl(url string, options Options) (*XsdHandler, error)](#NewXsdHandlerUrl)
   * [func (xsdHandler *XsdHandler) Free()](#XsdHandler.Free)
-  * [func (xsdHandler *XsdHandler) Validate(xmlHandler *XmlHandler, param Param) error](#XsdHandler.Validate)
+  * [func (xsdHandler *XsdHandler) Validate(xmlHandler *XmlHandler, options Options) error](#XsdHandler.Validate)
 
 #### <a name="pkg-examples">Examples</a>
 An example on how to use the api.
 Always bear in mind to free the handlers, the go gc will not collect those. In some situations, e.g. programatically looping over xml documents you might have to explicitly free the handler without defer.
 You prabably want to call xsdvalidate.Init() and xsdvalidate.Cleanup() only once after app start and before app end.
-
 
 	import (
 		"fmt"
@@ -83,40 +82,51 @@ You prabably want to call xsdvalidate.Init() and xsdvalidate.Cleanup() only once
 	}
 
 #### <a name="pkg-files">Package files</a>
-[libxml2.go](/libxml2.go) [validate_xsd.go](/validate_xsd.go) 
+[libxml2.go](libxml2.go) [validate_xsd.go](validate_xsd.go) 
 
 
 
 
 
-## <a name="Cleanup">func</a> [Cleanup](/validate_xsd.go?s=1251:1265#L37)
+## <a name="Cleanup">func</a> [Cleanup](validate_xsd.go?s=1652:1666#L42)
 ``` go
 func Cleanup()
 ```
-Cleans up the libxml2 parser, use this when application ends or parser is not needed anymore.
+Cleans up the libxml2 parser, use this when application ends or libxml2 is not needed anymore.
 
 
 
-## <a name="Init">func</a> [Init](/validate_xsd.go?s=1075:1086#L31)
+## <a name="Init">func</a> [Init](validate_xsd.go?s=1475:1486#L36)
 ``` go
 func Init()
 ```
-Initializes the libxml2 parser, according to libxml's instructions for thread safety.
+Initializes the libxml2 parser, suggested for multithreading.
 
 
 
 
-## <a name="Param">type</a> [Param](/validate_xsd.go?s=867:883#L23)
+## <a name="Options">type</a> [Options](validate_xsd.go?s=1042:1060#L22)
 ``` go
-type Param uint8
+type Options int16
 ```
+The Options type, currently used for log level.
+
 
 ``` go
 const (
-    ParserDefault Param = 1 << iota
+    ParsErrDefault Options = 1 << iota // Default parser error output
+    ParsErrVerbose                     // Verbose parser error output, considerably slower!
 )
 ```
-Parameter constant(s) for possible future use, e.g. parser error detail level.
+The parser options, ParsErrVerbose will slow down parsing considerably!
+
+
+``` go
+const (
+    ValidErrDefault Options = 1 << iota // Default validation error output
+)
+```
+Validation options.
 
 
 
@@ -127,7 +137,7 @@ Parameter constant(s) for possible future use, e.g. parser error detail level.
 
 
 
-## <a name="XmlHandler">type</a> [XmlHandler](/libxml2.go?s=3907:3953#L174)
+## <a name="XmlHandler">type</a> [XmlHandler](libxml2.go?s=5769:5815#L247)
 ``` go
 type XmlHandler struct {
     // contains filtered or unexported fields
@@ -141,9 +151,9 @@ Handles xml parsing, wraps a pointer to libxml2's xmlDocPtr.
 
 
 
-### <a name="NewXmlHandlerMem">func</a> [NewXmlHandlerMem](/validate_xsd.go?s=1531:1600#L45)
+### <a name="NewXmlHandlerMem">func</a> [NewXmlHandlerMem](validate_xsd.go?s=1932:2005#L50)
 ``` go
-func NewXmlHandlerMem(inXml []byte, param Param) (*XmlHandler, error)
+func NewXmlHandlerMem(inXml []byte, options Options) (*XmlHandler, error)
 ```
 Initialize the xml handler struct.
 Always use the Free() method when done using this handler or memory will be leaking.
@@ -153,16 +163,16 @@ The go garbage collector will not collect the allocated resources.
 
 
 
-### <a name="XmlHandler.Free">func</a> (\*XmlHandler) [Free](/validate_xsd.go?s=2778:2814#L78)
+### <a name="XmlHandler.Free">func</a> (\*XmlHandler) [Free](validate_xsd.go?s=3265:3301#L83)
 ``` go
 func (xmlHandler *XmlHandler) Free()
 ```
-Frees the xml docPtr, call this when handler is not needed anymore.
+Frees the xml docPtr, call this when this handler is not needed anymore.
 
 
 
 
-## <a name="XsdHandler">type</a> [XsdHandler](/libxml2.go?s=3789:3841#L169)
+## <a name="XsdHandler">type</a> [XsdHandler](libxml2.go?s=5651:5703#L242)
 ``` go
 type XsdHandler struct {
     // contains filtered or unexported fields
@@ -176,9 +186,9 @@ Handles schema parsing and validation, wraps a pointer to libxml2's xmlSchemaPtr
 
 
 
-### <a name="NewXsdHandlerUrl">func</a> [NewXsdHandlerUrl](/validate_xsd.go?s=1862:1929#L53)
+### <a name="NewXsdHandlerUrl">func</a> [NewXsdHandlerUrl](validate_xsd.go?s=2276:2347#L58)
 ``` go
-func NewXsdHandlerUrl(url string, param Param) (*XsdHandler, error)
+func NewXsdHandlerUrl(url string, options Options) (*XsdHandler, error)
 ```
 Initialize the xml handler struct.
 Always use Free() method when done using this handler or memory will be leaking.
@@ -188,20 +198,20 @@ The go garbage collector will not collect the allocated resources.
 
 
 
-### <a name="XsdHandler.Free">func</a> (\*XsdHandler) [Free](/validate_xsd.go?s=2638:2674#L73)
+### <a name="XsdHandler.Free">func</a> (\*XsdHandler) [Free](validate_xsd.go?s=3120:3156#L78)
 ``` go
 func (xsdHandler *XsdHandler) Free()
 ```
-Frees the schemaPtr, call this when handler is not needed anymore.
+Frees the schemaPtr, call this when this handler is not needed anymore.
 
 
 
 
-### <a name="XsdHandler.Validate">func</a> (\*XsdHandler) [Validate](/validate_xsd.go?s=2170:2251#L60)
+### <a name="XsdHandler.Validate">func</a> (\*XsdHandler) [Validate](validate_xsd.go?s=2643:2728#L65)
 ``` go
-func (xsdHandler *XsdHandler) Validate(xmlHandler *XmlHandler, param Param) error
+func (xsdHandler *XsdHandler) Validate(xmlHandler *XmlHandler, options Options) error
 ```
-The validation method validates an xmlHandler against an xsdHandler.
+The validation method validates an xmlHandler against an xsdHandler and returns the libxml2 validation error text.
 Both xmlHandler and xsdHandler have to be created first with the appropriate New... functions.
 
 
