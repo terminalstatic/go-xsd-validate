@@ -55,7 +55,7 @@ func NewXsdHandlerUrl(url string, param Param) (*XsdHandler, error) {
 	return &XsdHandler{sPtr}, err
 }
 
-// The validation method validates an xmlHandler against an xsdHandler.
+// The validation method validates an xmlHandler against an xsdHandler and returns the libxml2 validation error text.
 // Both xmlHandler and xsdHandler have to be created first with the appropriate New... functions.
 func (xsdHandler *XsdHandler) Validate(xmlHandler *XmlHandler, param Param) error {
 	if xsdHandler == nil || xsdHandler.schemaPtr == nil {

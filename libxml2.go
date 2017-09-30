@@ -74,23 +74,34 @@ static xsdParserResult cParseUrlSchema(const char *url) {
 	xmlSetGenericErrorFunc(NULL, noOutputCallback);
 
 	schemaParserCtxt = xmlSchemaNewParserCtxt(url);
-	xmlSchemaSetParserErrors(schemaParserCtxt, genErrorCallback, noOutputCallback, ectx);
 
-	schema = xmlSchemaParse(schemaParserCtxt);
-
-	xmlSchemaFreeParserCtxt(schemaParserCtxt);
-
-	if (schema == NULL) {
-		char prefix[] = "Malformed xsd document: ";
-		errBuf=malloc(strlen(prefix) + strlen(ectx->errBuf)+1);
-		memcpy(errBuf, prefix, strlen(prefix) + 1);
-		strcat(errBuf, ectx->errBuf);
-		strcpy(ectx->errBuf, "Malformed xsd document");
+	if (schemaParserCtxt == NULL) {
 		errno = -1;
-	} else {
-		errBuf = calloc(1, sizeof(char));
+		strcpy(ectx->errBuf, "Xsd parser internal error");
+	}
+	else
+	{
+		xmlSchemaSetParserErrors(schemaParserCtxt, genErrorCallback, noOutputCallback, ectx);
+
+		schema = xmlSchemaParse(schemaParserCtxt);
+
+		xmlSchemaFreeParserCtxt(schemaParserCtxt);
+
+		if (schema == NULL) {
+			errno = -1;
+			char *prefix = "Malformed xsd document: ";
+			char *tmp = malloc(strlen(prefix) + strlen(ectx->errBuf)+1);
+			memcpy(tmp, prefix, strlen(prefix) + 1);
+			strcat(tmp, ectx->errBuf);
+			free(ectx->errBuf);
+			ectx->errBuf = tmp;
+		} else {
+			errBuf = calloc(1, sizeof(char));
+		}
 	}
 
+	errBuf=malloc(strlen(ectx->errBuf)+1);
+	memcpy(errBuf,  ectx->errBuf, strlen(ectx->errBuf)+1);
 	free(ectx->errBuf);
 	free(ectx);
 	parserResult.schemaPtr=schema;
@@ -113,13 +124,20 @@ static xmlParserResult cParseDoc(char *goXmlSource, int goXmlSourceLen) {
 
 	xmlParserCtxt = xmlNewParserCtxt();
 
-	doc = xmlParseMemory(goXmlSource, goXmlSourceLen);
-
-	xmlFreeParserCtxt(xmlParserCtxt);
-
-	if (doc == NULL) {
-		strcpy(ectx->errBuf, "Malformed xml document");
+	if (xmlParserCtxt == NULL) {
 		errno = -1;
+		strcpy(ectx->errBuf, "Xml parser internal error");
+	}
+	else
+	{
+		doc = xmlParseMemory(goXmlSource, goXmlSourceLen);
+
+		xmlFreeParserCtxt(xmlParserCtxt);
+
+		if (doc == NULL) {
+			errno = -1;
+			strcpy(ectx->errBuf, "Malformed xml document");
+		}
 	}
 
 	errBuf=malloc(strlen(ectx->errBuf)+1);
@@ -150,28 +168,35 @@ static char *cValidate(xmlDocPtr doc, xmlSchemaPtr schema) {
 		xmlSchemaValidCtxtPtr schemaCtxt;
 		schemaCtxt = xmlSchemaNewValidCtxt(schema);
 
-		xmlSchemaSetValidErrors(schemaCtxt, genErrorCallback, noOutputCallback, ectx);
-		schemaErr = xmlSchemaValidateDoc(schemaCtxt, doc);
-
-		xmlSchemaFreeValidCtxt(schemaCtxt);
-
-		if (schemaErr == 0)
-		{
-			errno = 0;
-		}
-		else if (schemaErr > 0)
-		{
+		if (schemaCtxt == NULL) {
 			errno = -1;
+			strcpy(ectx->errBuf, "Xml validation internal error");
 		}
 		else
 		{
-			errno = -1;
-			strcpy(ectx->errBuf, "Xml validation internal error\n");
-		}
 
+			xmlSchemaSetValidErrors(schemaCtxt, genErrorCallback, noOutputCallback, ectx);
+			schemaErr = xmlSchemaValidateDoc(schemaCtxt, doc);
+
+			xmlSchemaFreeValidCtxt(schemaCtxt);
+
+			if (schemaErr == 0)
+			{
+				errno = 0;
+			}
+			else if (schemaErr > 0)
+			{
+				errno = -1;
+			}
+			else
+			{
+				errno = -1;
+				strcpy(ectx->errBuf, "Xml validation internal error");
+			}
+		}
 	}
 
-	errBuf=calloc(strlen(ectx->errBuf)+1, sizeof(char));
+	errBuf=malloc(strlen(ectx->errBuf)+1);
 	memcpy(errBuf,  ectx->errBuf, strlen(ectx->errBuf)+1);
 	free(ectx->errBuf);
 	free(ectx);
