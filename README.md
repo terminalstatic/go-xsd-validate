@@ -81,13 +81,13 @@ You prabably want to call xsdvalidate.Init() and xsdvalidate.Cleanup() only once
 	}
 
 #### <a name="pkg-files">Package files</a>
-[libxml2.go](libxml2.go) [validate_xsd.go](validate_xsd.go) 
+[libxml2.go](libxml2.go) [validate_xsd.go](blob/master/validate_xsd.go) 
 
 
 
 
 
-## <a name="Cleanup">func</a> [Cleanup](validate_xsd.go?s=1652:1666#L42)
+## <a name="Cleanup">func</a> [Cleanup](blob/master/validate_xsd.go?s=1652:1666#L42)
 ``` go
 func Cleanup()
 ```
@@ -95,7 +95,7 @@ Cleans up the libxml2 parser, use this when application ends or libxml2 is not n
 
 
 
-## <a name="Init">func</a> [Init](validate_xsd.go?s=1475:1486#L36)
+## <a name="Init">func</a> [Init](blob/master/validate_xsd.go?s=1475:1486#L36)
 ``` go
 func Init()
 ```
@@ -104,7 +104,7 @@ Initializes the libxml2 parser, suggested for multithreading.
 
 
 
-## <a name="Options">type</a> [Options](validate_xsd.go?s=1042:1060#L22)
+## <a name="Options">type</a> [Options](blob/master/validate_xsd.go?s=1042:1060#L22)
 ``` go
 type Options int16
 ```
@@ -150,7 +150,7 @@ Handles xml parsing, wraps a pointer to libxml2's xmlDocPtr.
 
 
 
-### <a name="NewXmlHandlerMem">func</a> [NewXmlHandlerMem](validate_xsd.go?s=1932:2005#L50)
+### <a name="NewXmlHandlerMem">func</a> [NewXmlHandlerMem](blob/master/validate_xsd.go?s=1932:2005#L50)
 ``` go
 func NewXmlHandlerMem(inXml []byte, options Options) (*XmlHandler, error)
 ```
@@ -162,7 +162,7 @@ The go garbage collector will not collect the allocated resources.
 
 
 
-### <a name="XmlHandler.Free">func</a> (\*XmlHandler) [Free](validate_xsd.go?s=3265:3301#L83)
+### <a name="XmlHandler.Free">func</a> (\*XmlHandler) [Free](blob/master/validate_xsd.go?s=3265:3301#L83)
 ``` go
 func (xmlHandler *XmlHandler) Free()
 ```
@@ -185,7 +185,7 @@ Handles schema parsing and validation, wraps a pointer to libxml2's xmlSchemaPtr
 
 
 
-### <a name="NewXsdHandlerUrl">func</a> [NewXsdHandlerUrl](validate_xsd.go?s=2276:2347#L58)
+### <a name="NewXsdHandlerUrl">func</a> [NewXsdHandlerUrl](blob/master/validate_xsd.go?s=2276:2347#L58)
 ``` go
 func NewXsdHandlerUrl(url string, options Options) (*XsdHandler, error)
 ```
@@ -197,7 +197,7 @@ The go garbage collector will not collect the allocated resources.
 
 
 
-### <a name="XsdHandler.Free">func</a> (\*XsdHandler) [Free](validate_xsd.go?s=3120:3156#L78)
+### <a name="XsdHandler.Free">func</a> (\*XsdHandler) [Free](blob/master/validate_xsd.go?s=3120:3156#L78)
 ``` go
 func (xsdHandler *XsdHandler) Free()
 ```
@@ -206,7 +206,7 @@ Frees the schemaPtr, call this when this handler is not needed anymore.
 
 
 
-### <a name="XsdHandler.Validate">func</a> (\*XsdHandler) [Validate](validate_xsd.go?s=2643:2728#L65)
+### <a name="XsdHandler.Validate">func</a> (\*XsdHandler) [Validate](blob/master/validate_xsd.go?s=2643:2728#L65)
 ``` go
 func (xsdHandler *XsdHandler) Validate(xmlHandler *XmlHandler, options Options) error
 ```
