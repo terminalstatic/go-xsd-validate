@@ -23,20 +23,20 @@ struct errCtx {
 	char *errBuf;
 };
 
-void noOutputCallback(void *ctx, const char *message, ...) {
+static void noOutputCallback(void *ctx, const char *message, ...) {
 }
 
-void init() {
+static void init() {
 	xmlInitParser();
 	xmlLineNumbersDefault(1);
 }
 
-void cleanup() {
+static void cleanup() {
 	xmlSchemaCleanupTypes();
 	xmlCleanupParser();
 }
 
-void genErrorCallback(void *ctx, const char *message, ...) {
+static void genErrorCallback(void *ctx, const char *message, ...) {
 	struct errCtx *ectx=(struct errCtx *) ctx;
 	char *newLine = malloc(GO_ERR_INIT);
 
@@ -110,7 +110,7 @@ static struct xsdParserResult cParseUrlSchema(const char *url) {
 
 }
 
-static struct xmlParserResult cParseDoc(char *goXmlSource, int goXmlSourceLen) {
+static struct xmlParserResult cParseDoc(const char *goXmlSource, const int goXmlSourceLen) {
 	struct xmlParserResult parserResult;
 	char *errBuf=NULL;
 	struct errCtx *ectx=malloc(sizeof(struct errCtx));
@@ -149,7 +149,7 @@ static struct xmlParserResult cParseDoc(char *goXmlSource, int goXmlSourceLen) {
 	return parserResult;
 }
 
-static char *cValidate(xmlDocPtr doc, xmlSchemaPtr schema) {
+static char *cValidate(const xmlDocPtr doc, const xmlSchemaPtr schema) {
 	char *errBuf=NULL;
 	struct errCtx *ectx=malloc(sizeof(struct errCtx));
 	ectx->errBuf=calloc(GO_ERR_INIT, sizeof(char));
