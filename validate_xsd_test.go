@@ -1,3 +1,5 @@
+// +build apitest
+
 package xsdvalidate
 
 import (

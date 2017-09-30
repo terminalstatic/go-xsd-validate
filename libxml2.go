@@ -9,19 +9,19 @@ package xsdvalidate
 #define GO_ERR_INIT 256
 #define LIBXML_STATIC
 
-typedef struct {
+struct xsdParserResult {
 	xmlSchemaPtr schemaPtr;
 	char *errorStr;
-} xsdParserResult;
+};
 
-typedef struct {
+struct xmlParserResult {
 	xmlDocPtr docPtr;
 	char *errorStr;
 } xmlParserResult;
 
-typedef struct {
+struct errCtx {
 	char *errBuf;
-} errCtx;
+};
 
 void noOutputCallback(void *ctx, const char *message, ...) {
 }
@@ -37,13 +37,13 @@ void cleanup() {
 }
 
 void genErrorCallback(void *ctx, const char *message, ...) {
-	errCtx *tctx=(errCtx *) ctx;
+	struct errCtx *ectx=(struct errCtx *) ctx;
 	char *newLine = malloc(GO_ERR_INIT);
 
 	va_list varArgs;
         va_start(varArgs, message);
 
-	int oldLen = strlen(tctx->errBuf) + 1;
+	int oldLen = strlen(ectx->errBuf) + 1;
 	int lineLen = 1 + vsnprintf(newLine, GO_ERR_INIT, message, varArgs);
 
 	if (lineLen  > GO_ERR_INIT) {
@@ -54,17 +54,17 @@ void genErrorCallback(void *ctx, const char *message, ...) {
 	va_end(varArgs);
 
 	char *tmp = malloc(oldLen + lineLen);
-	memcpy(tmp, tctx->errBuf, oldLen);
+	memcpy(tmp, ectx->errBuf, oldLen);
 	strcat(tmp, newLine);
-	free(tctx->errBuf);
-	tctx->errBuf = tmp;
+	free(ectx->errBuf);
+	ectx->errBuf = tmp;
 	free(newLine);
 }
 
-static xsdParserResult cParseUrlSchema(const char *url) {
-	xsdParserResult parserResult;
+static struct xsdParserResult cParseUrlSchema(const char *url) {
+	struct xsdParserResult parserResult;
 	char *errBuf=NULL;
-	errCtx *ectx=malloc(sizeof(errCtx));
+	struct errCtx *ectx=malloc(sizeof(struct errCtx));
 	ectx->errBuf=calloc(GO_ERR_INIT, sizeof(char));
 
 	xmlSchemaPtr schema = NULL;
@@ -110,10 +110,10 @@ static xsdParserResult cParseUrlSchema(const char *url) {
 
 }
 
-static xmlParserResult cParseDoc(char *goXmlSource, int goXmlSourceLen) {
-	xmlParserResult parserResult;
+static struct xmlParserResult cParseDoc(char *goXmlSource, int goXmlSourceLen) {
+	struct xmlParserResult parserResult;
 	char *errBuf=NULL;
-	errCtx *ectx=malloc(sizeof(errCtx));
+	struct errCtx *ectx=malloc(sizeof(struct errCtx));
 	ectx->errBuf=calloc(GO_ERR_INIT, sizeof(char));;
 
 	xmlDocPtr doc=NULL;
@@ -151,7 +151,7 @@ static xmlParserResult cParseDoc(char *goXmlSource, int goXmlSourceLen) {
 
 static char *cValidate(xmlDocPtr doc, xmlSchemaPtr schema) {
 	char *errBuf=NULL;
-	errCtx *ectx=malloc(sizeof(errCtx));
+	struct errCtx *ectx=malloc(sizeof(struct errCtx));
 	ectx->errBuf=calloc(GO_ERR_INIT, sizeof(char));
 	int schemaErr=0;
 
