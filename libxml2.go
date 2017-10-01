@@ -38,7 +38,7 @@ static void cleanup() {
 }
 
 static void genErrorCallback(void *ctx, const char *message, ...) {
-	struct errCtx *ectx=(struct errCtx *) ctx;
+	struct errCtx *ectx = ctx;
 	char *newLine = malloc(GO_ERR_INIT);
 
 	va_list varArgs;
@@ -50,16 +50,16 @@ static void genErrorCallback(void *ctx, const char *message, ...) {
 	if (lineLen  > GO_ERR_INIT) {
 		free(newLine);
 		newLine = malloc(lineLen);
-		vsnprintf(newLine, GO_ERR_INIT, message, varArgs);
+		vsnprintf(newLine, lineLen, message, varArgs);
 	}
 	va_end(varArgs);
 
 	char *tmp = malloc(oldLen + lineLen);
 	memcpy(tmp, ectx->errBuf, oldLen);
 	strcat(tmp, newLine);
+	free(newLine);
 	free(ectx->errBuf);
 	ectx->errBuf = tmp;
-	free(newLine);
 }
 
 static struct xsdParserResult cParseUrlSchema(const char *url, const short int options) {
@@ -105,8 +105,6 @@ static struct xsdParserResult cParseUrlSchema(const char *url, const short int o
 			}
 			free(ectx->errBuf);
 			ectx->errBuf = tmp;
-		} else {
-			errBuf = calloc(1, sizeof(char));
 		}
 	}
 	errBuf=malloc(strlen(ectx->errBuf)+1);

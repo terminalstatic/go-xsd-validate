@@ -67,8 +67,8 @@ func TestMemParseXml(t *testing.T) {
 		guard <- struct{}{}
 		wg.Add(1)
 		go func(inXml []byte) {
-			//xmlhandler, err := NewXmlHandlerMem(inXml, ParsErrDefault)
-			xmlhandler, err := NewXmlHandlerMem(inXml, ParsErrVerbose)
+			xmlhandler, err := NewXmlHandlerMem(inXml, ParsErrDefault)
+			//xmlhandler, err := NewXmlHandlerMem(inXml, ParsErrVerbose)
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -112,7 +112,8 @@ func TestMemValidate(t *testing.T) {
 
 	defer xsdhandler.Free()
 
-	for i := 0; i < 1000000; i++ {
+	wg.Add(1)
+	for i := 0; i < 100000000; i++ {
 		guard <- struct{}{}
 		wg.Add(1)
 		go func(inXml []byte) {
@@ -128,6 +129,10 @@ func TestMemValidate(t *testing.T) {
 			<-guard
 			wg.Done()
 		}(inXml)
+		/*if i > 0 && (i%1000000) == 0 {
+			fmt.Println("Test paused ...\a\n")
+			time.Sleep(30 * time.Second)
+		}*/
 	}
 	wg.Wait()
 }
