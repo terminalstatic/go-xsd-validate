@@ -53,11 +53,12 @@ You prabably want to call xsdvalidate.Init() and xsdvalidate.Cleanup() only once
 	func Example() {
 		xsdvalidate.Init()
 		defer xsdvalidate.Cleanup()
-		xsdhandler, err := xsdvalidate.NewXsdHandlerUrl("examples/test1_split.xsd", xsdvalidate.ParserDefault)
+		xsdhandler, err := xsdvalidate.NewXsdHandlerUrl("examples/test1_split.xsd", xsdvalidate.ParsErrDefault)
 		if err != nil {
 			panic(err)
 		}
 		defer xsdhandler.Free()
+
 		xmlFile, err := os.Open("examples/test1_pass.xml")
 		if err != nil {
 			panic(err)
@@ -67,12 +68,14 @@ You prabably want to call xsdvalidate.Init() and xsdvalidate.Cleanup() only once
 		if err != nil {
 			panic(err)
 		}
-		xmlhandler, err := xsdvalidate.NewXmlHandlerMem(inXml, xsdvalidate.ParserDefault)
+
+		xmlhandler, err := xsdvalidate.NewXmlHandlerMem(inXml, xsdvalidate.ParsErrDefault)
 		if err != nil {
 			panic(err)
 		}
 		defer xmlhandler.Free()
-		err = xsdhandler.Validate(xmlhandler, xsdvalidate.ParserDefault)
+
+		err = xsdhandler.Validate(xmlhandler, xsdvalidate.ValidErrDefault)
 		if err != nil {
 			panic(err)
 		}
