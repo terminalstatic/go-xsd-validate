@@ -59,7 +59,7 @@ You prabably want to call xsdvalidate.Init() and xsdvalidate.Cleanup() only once
 		}
 		defer xsdhandler.Free()
 
-		xmlFile, err := os.Open("examples/test1_pass.xml")
+		xmlFile, err := os.Open("examples/test1_fail2.xml")
 		if err != nil {
 			panic(err)
 		}
@@ -77,10 +77,11 @@ You prabably want to call xsdvalidate.Init() and xsdvalidate.Cleanup() only once
 
 		err = xsdhandler.Validate(xmlhandler, xsdvalidate.ValidErrDefault)
 		if err != nil {
-			panic(err)
+			fmt.Println(err)
 		}
-		fmt.Println("Validation OK")
-		// Output: Validation OK
+		// Output:
+		// Validation error:
+		// Element 'shipto': This element is not expected. Expected is ( orderperson ).
 	}
 
 #### <a name="pkg-files">Package files</a>

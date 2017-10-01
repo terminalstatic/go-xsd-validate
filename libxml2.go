@@ -94,17 +94,14 @@ static struct xsdParserResult cParseUrlSchema(const char *url, const short int o
 		xmlSchemaFreeParserCtxt(schemaParserCtxt);
 		if (schema == NULL) {
 			errno = -1;
-			char *prefix = "Malformed xsd document: \n";
 			char *tmp = NULL;
 			if (options & P_ERR_EXT) {
-				tmp = (char *) malloc(strlen(prefix) + strlen(ectx->errBuf) + strlen(genEctx->errBuf) + 1);
-				memcpy(tmp, prefix, strlen(prefix) + 1);
-				strcat(tmp, ectx->errBuf);
+				tmp = (char *) malloc(strlen(ectx->errBuf) + strlen(genEctx->errBuf) + 1);
+				memcpy(tmp, ectx->errBuf, strlen(ectx->errBuf) + 1);
 				strcat(tmp, genEctx->errBuf);
 			} else {
-				tmp = (char *) malloc(strlen(prefix) + strlen(ectx->errBuf) + 1);
-				memcpy(tmp, prefix, strlen(prefix) + 1);
-				strcat(tmp, ectx->errBuf);
+				tmp = (char *) malloc(strlen(ectx->errBuf) + 1);
+				memcpy(tmp, ectx->errBuf, strlen(ectx->errBuf) + 1);
 			}
 			free(ectx->errBuf);
 			ectx->errBuf = tmp;
@@ -155,10 +152,8 @@ static struct xmlParserResult cParseDoc(const char *goXmlSource, const int goXml
 		if (doc == NULL) {
 			if (options & P_ERR_EXT) {
 				errno = -1;
-				char *prefix = "Malformed xml document: \n";
-				char *tmp = malloc(strlen(prefix) + strlen(ectx->errBuf) + 1);
-				memcpy(tmp, prefix, strlen(prefix) + 1);
-				strcat(tmp, ectx->errBuf);
+				char *tmp = malloc(strlen(ectx->errBuf) + 1);
+				memcpy(tmp, ectx->errBuf, strlen(ectx->errBuf) + 1);
 				free(ectx->errBuf);
 				ectx->errBuf = tmp;
 			} else {
@@ -268,7 +263,7 @@ func parseXmlMem(inXml []byte, options Options) (C.xmlDocPtr, error) {
 	defer C.free(unsafe.Pointer(pRes.errorStr))
 	if err != nil {
 		rStr := C.GoString(pRes.errorStr)
-		return nil, errors.New(strings.Trim(rStr, "\n"))
+		return nil, errors.New("Xml parser error:\n" + strings.Trim(rStr, "\n"))
 	}
 	return pRes.docPtr, nil
 }
@@ -282,7 +277,7 @@ func parseUrlSchema(url string, options Options) (C.xmlSchemaPtr, error) {
 	defer C.free(unsafe.Pointer(pRes.errorStr))
 	if err != nil {
 		rStr := C.GoString(pRes.errorStr)
-		return nil, errors.New(strings.Trim(rStr, "\n"))
+		return nil, errors.New("Xsd parser error:\n" + strings.Trim(rStr, "\n"))
 	}
 	return pRes.schemaPtr, nil
 }
@@ -295,7 +290,7 @@ func validateWithXsd(xmlHandler *XmlHandler, xsdHandler *XsdHandler) error {
 	defer C.free(unsafe.Pointer(sPtr))
 	if err != nil {
 		rStr := C.GoString(sPtr)
-		return errors.New(strings.Trim(rStr, "\n"))
+		return errors.New("Validation error:\n" + strings.Trim(rStr, "\n"))
 	}
 	return nil
 }
