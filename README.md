@@ -14,7 +14,7 @@ The rationale behind this package is to preload xsd files and use their in-memor
 
 This package is part of a rewrite of a legacy online service I'm currently working on. As there are limited resources on how to handle xsd validation in go this might be useful for somebody.
 
-As libxml2-dev is needed, this is an example how to install the latest sources (Ubuntu, change prefix according to where libs and include files are located):
+Libxml2-dev is needed, below an example how to install the latest sources (Ubuntu, change prefix according to where libs and include files are located):
 
 
 	curl -sL <a href="ftp://xmlsoft.org/libxml2/libxml2-2.9.5.tar.gz">ftp://xmlsoft.org/libxml2/libxml2-2.9.5.tar.gz</a> | tar -xzf -
