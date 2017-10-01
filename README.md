@@ -12,7 +12,7 @@ A simple package for xsd validation, uses libxml2.
 
 The rationale behind this package is to preload xsd files and use their in-memory structure to validate incoming xml documents in a concurrent environment, eg. the post bodys of xml service endpoints and also return useful error messages when appropriate.
 
-This package is part of a rewrite of a legacy online service I'm currently working on and is not yet used in production. Nevertheless there are limited resources on how to handle xsd validation in go, so this might be useful for somebody.
+This package is part of a rewrite of a legacy online service I'm currently working on. As there are limited resources on how to handle xsd validation in go this might be useful for somebody.
 
 As libxml2-dev is needed, this is an example how to install the latest sources (Ubuntu, change prefix according to where libs and include files are located):
 
@@ -39,8 +39,8 @@ As libxml2-dev is needed, this is an example how to install the latest sources (
   * [func (xsdHandler *XsdHandler) Validate(xmlHandler *XmlHandler, options Options) error](#XsdHandler.Validate)
 
 #### <a name="pkg-examples">Examples</a>
-An example on how to use the api.
-Always bear in mind to free the handlers, the go gc will not collect those. In some situations, e.g. programatically looping over xml documents you might have to explicitly free the handler without defer.
+An example on how to use the package.
+Always free the handlers, the go gc will not collect those. In some situations, e.g. programatically looping over xml documents you might have to explicitly free the handler without defer.
 You prabably want to call xsdvalidate.Init() and xsdvalidate.Cleanup() only once after app start and before app end.
 
 	import (
