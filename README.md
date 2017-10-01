@@ -10,11 +10,11 @@
 ## <a name="pkg-overview">Overview</a>
 A simple package for xsd validation, uses libxml2.
 
-The rationale behind this package is to preload xsd files and use their in-memory structure to validate incoming xml documents in a concurrent environment, eg. the post bodys of xml service endpoints and also return useful error messages when appropriate.
+The rationale behind this package is to preload xsd files and use their in-memory structure to validate incoming xml documents in a concurrent environment, eg. the post bodys of xml service endpoints, and return useful error messages when appropriate.
 
-This package is part of a rewrite of a legacy online service I'm currently working on. As there are limited resources on how to handle xsd validation in go this might be useful for somebody.
+This package is part of a rewrite for an online service I'm currently working on. As there are limited resources on how to handle xsd validation in go this might be useful for somebody.
 
-Libxml2-dev is needed, below an example how to install the latest sources (Ubuntu, change prefix according to where libs and include files are located):
+libxml2-dev is needed, below an example how to install the latest sources (Ubuntu, change prefix according to where libs and include files are located):
 
 
 	curl -sL <a href="ftp://xmlsoft.org/libxml2/libxml2-2.9.5.tar.gz">ftp://xmlsoft.org/libxml2/libxml2-2.9.5.tar.gz</a> | tar -xzf -
@@ -40,7 +40,7 @@ Libxml2-dev is needed, below an example how to install the latest sources (Ubunt
 
 #### <a name="pkg-examples">Examples</a>
 An example on how to use the package.
-Always free the handlers, the go gc will not collect those. In some situations, e.g. programatically looping over xml documents you might have to explicitly free the handler without defer.
+In some situations, e.g. programatically looping over xml documents you might have to explicitly free the handler without defer.
 You prabably want to call xsdvalidate.Init() and xsdvalidate.Cleanup() only once after app start and before app end.
 
 	import (
@@ -103,7 +103,7 @@ Cleans up the libxml2 parser, use this when application ends or libxml2 is not n
 ``` go
 func Init()
 ```
-Initializes the libxml2 parser, suggested for multithreading.
+Initializes the libxml2 parser, suggested for multithreading, see (http://xmlsoft.org/threads.html).
 
 
 
@@ -112,8 +112,7 @@ Initializes the libxml2 parser, suggested for multithreading.
 ``` go
 type Options int16
 ```
-The Options type, currently used for log level.
-
+The type for parser/validation options.
 
 ``` go
 const (
@@ -129,18 +128,7 @@ const (
     ValidErrDefault Options = 1 << iota // Default validation error output
 )
 ```
-Validation options.
-
-
-
-
-
-
-
-
-
-
-## <a name="XmlHandler">type</a> [XmlHandler](libxml2.go?s=5769:5815#L247)
+Validation options for possible future enhancements.
 ``` go
 type XmlHandler struct {
     // contains filtered or unexported fields

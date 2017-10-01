@@ -1,10 +1,10 @@
 // A simple package for xsd validation, uses libxml2.
 //
-// The rationale behind this package is to preload xsd files and use their in-memory structure to validate incoming xml documents in a concurrent environment, eg. the post bodys of xml service endpoints and also return useful error messages when appropriate.
+// The rationale behind this package is to preload xsd files and use their in-memory structure to validate incoming xml documents in a concurrent environment, eg. the post bodys of xml service endpoints, and return useful error messages when appropriate.
 //
-// This package is part of a rewrite of a legacy online service I'm currently working on and is not yet used in production. Nevertheless there are limited resources on how to handle xsd validation in go, so this might be useful for somebody.
+// This package is part of a rewrite for an online service I'm currently working on. As there are limited resources on how to handle xsd validation in go this might be useful for somebody.
 //
-// As libxml2-dev is needed, this is an example how to install the latest sources (Ubuntu, change prefix according to where libs and include files are located):
+// libxml2-dev is needed, below an example how to install the latest sources (Ubuntu, change prefix according to where libs and include files are located):
 //  curl -sL ftp://xmlsoft.org/libxml2/libxml2-2.9.5.tar.gz | tar -xzf -
 //  cd ./libxml2-2.9.5/
 //  ./configure --prefix=/usr  --enable-static --with-threads --with-history
@@ -18,7 +18,7 @@ import (
 	"log"
 )
 
-// The Options type, currently used for log level.
+// The type for parser/validation options.
 type Options int16
 
 // The parser options, ParsErrVerbose will slow down parsing considerably!
@@ -27,12 +27,12 @@ const (
 	ParsErrVerbose                     // Verbose parser error output, considerably slower!
 )
 
-// Validation options.
+// Validation options for possible future enhancements.
 const (
 	ValidErrDefault Options = 1 << iota // Default validation error output
 )
 
-// Initializes the libxml2 parser, suggested for multithreading.
+// Initializes the libxml2 parser, suggested for multithreading, see http://xmlsoft.org/threads.html.
 func Init() {
 	log.Printf("Initializing the libxml2 parser")
 	libXml2Init()
