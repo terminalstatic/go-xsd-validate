@@ -63,7 +63,7 @@ func TestMemParseXml(t *testing.T) {
 		return
 	}
 
-	for i := 0; i < 1000000; i++ {
+	for i := 0; i < 10000000; i++ {
 		guard <- struct{}{}
 		wg.Add(1)
 		go func(inXml []byte) {

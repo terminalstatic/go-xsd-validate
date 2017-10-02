@@ -1,4 +1,4 @@
-package xsdvalidate
+package libxml2
 
 /*
 #cgo pkg-config: libxml-2.0
@@ -227,18 +227,116 @@ static char *cValidate(const xmlDocPtr doc, const xmlSchemaPtr schema) {
 import "C"
 import (
 	"errors"
+	"log"
+	"runtime"
 	"strings"
+	"sync"
+	"time"
 	"unsafe"
+
+	"github.com/terminalstatic/go-xsd-validate/common"
 )
 
-// Handles schema parsing and validation, wraps a pointer to libxml2's xmlSchemaPtr.
-type XsdHandler struct {
-	schemaPtr C.xmlSchemaPtr
+// Wraps a pointer to libxml2's xmlSchemaPtr.
+type SchemaPtr C.xmlSchemaPtr
+
+// Wraps a pointer to libxml2's xmlDocPtr.
+type DocPtr C.xmlDocPtr
+
+// Manages Libxml init, cleanup and memory sanity
+type libxml2 struct {
+	sync.Mutex
+	ticker int
+	Quit   chan struct{}
 }
 
-// Handles xml parsing, wraps a pointer to libxml2's xmlDocPtr.
-type XmlHandler struct {
-	docPtr C.xmlDocPtr
+var instance *libxml2 = nil
+var mutex sync.Mutex
+
+// Function for running the gc and malloc_trim
+func gcTicker(seconds int, quit chan struct{}) {
+	ticker := time.NewTicker(time.Duration(seconds) * time.Second)
+	for {
+		select {
+		case <-ticker.C:
+			log.Println("Running GC and malloc_trim(0)")
+			runtime.GC()
+			C.malloc_trim(0)
+		case <-quit:
+			log.Println("GC ticker stopped")
+			ticker.Stop()
+			return
+		}
+	}
+}
+
+func New() *libxml2 {
+	mutex.Lock()
+	defer mutex.Unlock()
+	if instance == nil {
+		instance = &libxml2{ticker: 0}
+	}
+	return instance
+}
+
+func NewAndInit(gcSeconds int) {
+	New()
+	if instance == nil {
+		panic(errors.New("Error creating libxml2 struct"))
+	}
+	instance.Init(gcSeconds)
+}
+
+func NewAndDefault() {
+	New()
+	if instance == nil {
+		panic(errors.New("Error creating libxml2 struct"))
+	}
+	instance.Init(60)
+
+}
+
+// Initializes libxml2, suggested for multithreading, see http://xmlsoft.org/threads.html. Takes gcSeconds as an argument, when >0 schedules gc and malloc_trim every gcSeconds seconds.
+func (libxml2 *libxml2) Init(gcSeconds int) {
+	if libxml2 == nil {
+		panic(errors.New("libxml2 struct == nil"))
+	}
+	mutex.Lock()
+	defer mutex.Unlock()
+	libxml2.Reset(gcSeconds)
+	C.init()
+}
+
+// Shuts down libxml2, use this when application ends or libxml2 is not needed anymore.
+func (libxml2 *libxml2) Shutdown() {
+	mutex.Lock()
+	defer mutex.Unlock()
+	if libxml2.Quit != nil {
+		libxml2.Lock()
+		libxml2.Quit <- struct{}{}
+		libxml2.Quit = nil
+		libxml2.Unlock()
+		libxml2 = nil
+	}
+	C.cleanup()
+}
+
+// Resets the gc and malloc_trim ticker or disables it when gcSeconds is set to 0.
+func (libxml2 *libxml2) Reset(gcSeconds int) {
+	libxml2.Lock()
+	defer libxml2.Unlock()
+	if libxml2.Quit != nil {
+		libxml2.Quit <- struct{}{}
+		libxml2.Quit = nil
+	}
+	if gcSeconds > 0 {
+		log.Printf("GC and malloc_trim ticker started and set to %d second(s)", gcSeconds)
+		libxml2.Quit = make(chan struct{})
+		go gcTicker(gcSeconds, libxml2.Quit)
+	} else {
+		log.Println("GC and malloc_trim disabled")
+	}
+
 }
 
 // Initializes the libxml2 parser, suggested for multithreading
@@ -251,8 +349,8 @@ func libXml2Cleanup() {
 	C.cleanup()
 }
 
-// The helper function for parsing xml
-func parseXmlMem(inXml []byte, options Options) (C.xmlDocPtr, error) {
+// Helper function for parsing xml
+func ParseXmlMem(inXml []byte, options common.Options) (C.xmlDocPtr, error) {
 
 	strXml := C.CString(string(inXml))
 	defer C.free(unsafe.Pointer(strXml))
@@ -266,8 +364,8 @@ func parseXmlMem(inXml []byte, options Options) (C.xmlDocPtr, error) {
 	return pRes.docPtr, nil
 }
 
-// The helper function for parsing the schema
-func parseUrlSchema(url string, options Options) (C.xmlSchemaPtr, error) {
+// Helper function for parsing the schema
+func ParseUrlSchema(url string, options common.Options) (C.xmlSchemaPtr, error) {
 	strUrl := C.CString(url)
 	defer C.free(unsafe.Pointer(strUrl))
 
@@ -281,10 +379,8 @@ func parseUrlSchema(url string, options Options) (C.xmlSchemaPtr, error) {
 }
 
 // Helper function for validating given an xml document
-func validateWithXsd(xmlHandler *XmlHandler, xsdHandler *XsdHandler) error {
-	defer C.malloc_trim(0)
-
-	sPtr, err := C.cValidate(xmlHandler.docPtr, xsdHandler.schemaPtr)
+func ValidateWithXsd(docPtr *DocPtr, schemaPtr *SchemaPtr) error {
+	sPtr, err := C.cValidate(C.xmlDocPtr(*docPtr), C.xmlSchemaPtr(*schemaPtr))
 	defer C.free(unsafe.Pointer(sPtr))
 	if err != nil {
 		rStr := C.GoString(sPtr)
@@ -294,15 +390,15 @@ func validateWithXsd(xmlHandler *XmlHandler, xsdHandler *XsdHandler) error {
 }
 
 //Wrapper for the xmlSchemaFree function
-func freeSchemaPtr(xsdHandler *XsdHandler) {
-	if xsdHandler.schemaPtr != nil {
-		C.xmlSchemaFree(xsdHandler.schemaPtr)
+func FreeSchemaPtr(schemaPtr *SchemaPtr) {
+	if schemaPtr != nil {
+		C.xmlSchemaFree(C.xmlSchemaPtr(*schemaPtr))
 	}
 }
 
 //Wrapper for the xmlFreeDoc function
-func freeDocPtr(xmlHandler *XmlHandler) {
-	if xmlHandler.docPtr != nil {
-		C.xmlFreeDoc(xmlHandler.docPtr)
+func FreeDocPtr(docPtr *DocPtr) {
+	if docPtr != nil {
+		C.xmlFreeDoc(C.xmlDocPtr(*docPtr))
 	}
 }

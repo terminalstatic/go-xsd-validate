@@ -1,4 +1,4 @@
-// A simple package for xsd validation, uses libxml2.
+// A simple package for xsd validation, uses
 //
 // The rationale behind this package is to preload xsd files and use their in-memory structure to validate incoming xml documents in a concurrent environment, eg. the post bodys of xml service endpoints, and return useful error messages when appropriate.
 //
@@ -15,71 +15,59 @@ package xsdvalidate
 import "C"
 import (
 	"errors"
-	"log"
+
+	"github.com/terminalstatic/go-xsd-validate/common"
+	"github.com/terminalstatic/go-xsd-validate/libxml2"
 )
 
-// The type for parser/validation options.
-type Options int16
-
-// The parser options, ParsErrVerbose will slow down parsing considerably!
-const (
-	ParsErrDefault Options = 1 << iota // Default parser error output
-	ParsErrVerbose                     // Verbose parser error output, considerably slower!
-)
-
-// Validation options for possible future enhancements.
-const (
-	ValidErrDefault Options = 1 << iota // Default validation error output
-)
-
-// Initializes the libxml2 parser, suggested for multithreading, see http://xmlsoft.org/threads.html.
-func Init() {
-	log.Printf("Initializing the libxml2 parser")
-	libXml2Init()
+// Handles schema parsing and validation, wraps CXsdHandler.
+type XsdHandler struct {
+	schemaPtr *libxml2.SchemaPtr
 }
 
-// Cleans up the libxml2 parser, use this when application ends or libxml2 is not needed anymore.
-func Cleanup() {
-	log.Printf("Cleaning up the libxml2 parser")
-	libXml2Cleanup()
+// Handles xml parsing, wraps CXmlHandler.
+type XmlHandler struct {
+	docPtr *libxml2.DocPtr
 }
 
 // Initialize the xml handler struct.
 // Always use the Free() method when done using this handler or memory will be leaking.
 // The go garbage collector will not collect the allocated resources.
-func NewXmlHandlerMem(inXml []byte, options Options) (*XmlHandler, error) {
-	xPtr, err := parseXmlMem(inXml, options)
-	return &XmlHandler{xPtr}, err
+func NewXmlHandlerMem(inXml []byte, options common.Options) (*XmlHandler, error) {
+	xPtr, err := libxml2.ParseXmlMem(inXml, options)
+	docPtr := libxml2.DocPtr(xPtr)
+	return &XmlHandler{&docPtr}, err
 }
 
 // Initialize the xml handler struct.
 // Always use Free() method when done using this handler or memory will be leaking.
 // The go garbage collector will not collect the allocated resources.
-func NewXsdHandlerUrl(url string, options Options) (*XsdHandler, error) {
-	sPtr, err := parseUrlSchema(url, options)
-	return &XsdHandler{sPtr}, err
+func NewXsdHandlerUrl(url string, options common.Options) (*XsdHandler, error) {
+	sPtr, err := libxml2.ParseUrlSchema(url, options)
+	schemaPtr := libxml2.SchemaPtr(sPtr)
+	return &XsdHandler{&schemaPtr}, err
 }
 
 // The validation method validates an xmlHandler against an xsdHandler and returns the libxml2 validation error text.
 // Both xmlHandler and xsdHandler have to be created first with the appropriate New... functions.
-func (xsdHandler *XsdHandler) Validate(xmlHandler *XmlHandler, options Options) error {
-	if xsdHandler == nil || xsdHandler.schemaPtr == nil {
+func (xsdHandler *XsdHandler) Validate(xmlHandler *XmlHandler, options common.Options) error {
+	if xsdHandler.schemaPtr == nil {
 		return errors.New("Xsd handler not properly initialized, use 'New...'")
 
 	}
-	if xsdHandler == nil || xmlHandler.docPtr == nil {
+	if xmlHandler.docPtr == nil {
 		return errors.New("Xml handler not properly initialized, use 'New...'")
 	}
-	return validateWithXsd(xmlHandler, xsdHandler)
+	return libxml2.ValidateWithXsd(xmlHandler.docPtr, xsdHandler.schemaPtr)
 
 }
 
 // Frees the schemaPtr, call this when this handler is not needed anymore.
 func (xsdHandler *XsdHandler) Free() {
-	freeSchemaPtr(xsdHandler)
+	libxml2.FreeSchemaPtr(xsdHandler.schemaPtr)
 }
 
 // Frees the xml docPtr, call this when this handler is not needed anymore.
 func (xmlHandler *XmlHandler) Free() {
-	freeDocPtr(xmlHandler)
+	libxml2.FreeDocPtr(xmlHandler.docPtr)
 }
