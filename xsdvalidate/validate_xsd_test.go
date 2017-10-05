@@ -7,13 +7,15 @@ import (
 	"io/ioutil"
 	"os"
 	"testing"
+
+	"github.com/terminalstatic/go-xsd-validate/libxml2"
 )
 
 func TestXsdUrlHandlerPass(t *testing.T) {
-	Init()
-	defer Cleanup()
+	l2 := libxml2.NewInit(10)
+	defer l2.Shutdown()
 
-	handler, err := NewXsdHandlerUrl("examples/test1_split.xsd", ParsErrDefault)
+	handler, err := NewXsdHandlerUrl("../examples/test1_split.xsd", libxml2.ParsErrDefault)
 	if err != nil {
 		fmt.Printf("%s %s\n", t.Name(), err.Error())
 		t.Fail()
@@ -21,10 +23,10 @@ func TestXsdUrlHandlerPass(t *testing.T) {
 	defer handler.Free()
 }
 func TestXsdUrlHandlerFail(t *testing.T) {
-	Init()
-	defer Cleanup()
+	l2 := libxml2.NewInit(10)
+	defer l2.Shutdown()
 
-	handler, err := NewXsdHandlerUrl("examples/test1_fail.xsd", ParsErrVerbose)
+	handler, err := NewXsdHandlerUrl("../examples/test1_fail.xsd", libxml2.ParsErrVerbose)
 	fmt.Printf("Error OK: %s %s\n", t.Name(), err.Error())
 	if err == nil {
 		t.Fail()
@@ -32,10 +34,10 @@ func TestXsdUrlHandlerFail(t *testing.T) {
 	defer handler.Free()
 }
 func TestXmlMemHandlerPass(t *testing.T) {
-	Init()
-	defer Cleanup()
+	l2 := libxml2.NewInit(10)
+	defer l2.Shutdown()
 
-	xmlFilePass, err := os.Open("examples/test1_pass.xml")
+	xmlFilePass, err := os.Open("../examples/test1_pass.xml")
 	if err != nil {
 		fmt.Printf("Error: %s %s\n", t.Name(), err.Error())
 		return
@@ -44,7 +46,7 @@ func TestXmlMemHandlerPass(t *testing.T) {
 
 	inXml, _ := ioutil.ReadAll(xmlFilePass)
 
-	handler, err := NewXmlHandlerMem(inXml, ParsErrDefault)
+	handler, err := NewXmlHandlerMem(inXml, libxml2.ParsErrDefault)
 	if err != nil {
 		fmt.Printf("Error: %s %s\n", t.Name(), err.Error())
 		t.Fail()
@@ -53,10 +55,10 @@ func TestXmlMemHandlerPass(t *testing.T) {
 }
 
 func TestXmlMemHandlerFail(t *testing.T) {
-	Init()
-	defer Cleanup()
+	l2 := libxml2.NewInit(10)
+	defer l2.Shutdown()
 
-	xmlFilePass, err := os.Open("examples/test1_fail1.xml")
+	xmlFilePass, err := os.Open("../examples/test1_fail1.xml")
 	if err != nil {
 		panic(err)
 	}
@@ -64,7 +66,7 @@ func TestXmlMemHandlerFail(t *testing.T) {
 
 	inXml, _ := ioutil.ReadAll(xmlFilePass)
 
-	handler, err := NewXmlHandlerMem(inXml, ParsErrDefault)
+	handler, err := NewXmlHandlerMem(inXml, libxml2.ParsErrDefault)
 	if err == nil {
 		t.Fail()
 	} else {
@@ -74,17 +76,17 @@ func TestXmlMemHandlerFail(t *testing.T) {
 }
 
 func TestValidateWithXsdHandlerPass(t *testing.T) {
-	Init()
-	defer Cleanup()
+	l2 := libxml2.NewInit(10)
+	defer l2.Shutdown()
 
-	xsdhandler, err := NewXsdHandlerUrl("examples/test1_split.xsd", ParsErrDefault)
+	xsdhandler, err := NewXsdHandlerUrl("../examples/test1_split.xsd", libxml2.ParsErrDefault)
 	if err != nil {
 		fmt.Printf("Error: %s %s\n", t.Name(), err.Error())
 		t.Fail()
 	}
 	defer xsdhandler.Free()
 
-	xmlFile, err := os.Open("examples/test1_pass.xml")
+	xmlFile, err := os.Open("../examples/test1_pass.xml")
 	if err != nil {
 		fmt.Printf("Error: %s %s\n", t.Name(), err.Error())
 		return
@@ -92,14 +94,14 @@ func TestValidateWithXsdHandlerPass(t *testing.T) {
 	defer xmlFile.Close()
 	inXml, _ := ioutil.ReadAll(xmlFile)
 
-	xmlhandler, err := NewXmlHandlerMem(inXml, ParsErrDefault)
+	xmlhandler, err := NewXmlHandlerMem(inXml, libxml2.ParsErrDefault)
 	if err != nil {
 		fmt.Printf("Error: %s %s\n", t.Name(), err.Error())
 		t.Fail()
 	}
 	defer xmlhandler.Free()
 
-	err = xsdhandler.Validate(xmlhandler, ValidErrDefault)
+	err = xsdhandler.Validate(xmlhandler, libxml2.ValidErrDefault)
 	if err != nil {
 		fmt.Printf("Error: %s %s\n", t.Name(), err.Error())
 		t.Fail()
@@ -108,17 +110,17 @@ func TestValidateWithXsdHandlerPass(t *testing.T) {
 }
 
 func TestValidateWithXsdHandlerFail(t *testing.T) {
-	Init()
-	defer Cleanup()
+	l2 := libxml2.NewInit(10)
+	defer l2.Shutdown()
 
-	xsdhandler, err := NewXsdHandlerUrl("examples/test1_split.xsd", ParsErrVerbose)
+	xsdhandler, err := NewXsdHandlerUrl("../examples/test1_split.xsd", libxml2.ParsErrVerbose)
 	if err != nil {
 		fmt.Printf("Error: %s %s\n", t.Name(), err.Error())
 		t.Fail()
 	}
 	defer xsdhandler.Free()
 
-	xmlFile, err := os.Open("examples/test1_fail2.xml")
+	xmlFile, err := os.Open("../examples/test1_fail2.xml")
 	if err != nil {
 		fmt.Printf("Error: %s %s\n", t.Name(), err.Error())
 		return
@@ -126,14 +128,14 @@ func TestValidateWithXsdHandlerFail(t *testing.T) {
 	defer xmlFile.Close()
 	inXml, _ := ioutil.ReadAll(xmlFile)
 
-	xmlhandler, err := NewXmlHandlerMem(inXml, ParsErrDefault)
+	xmlhandler, err := NewXmlHandlerMem(inXml, libxml2.ParsErrDefault)
 	if err != nil {
 		fmt.Printf("Error: %s %s\n", t.Name(), err.Error())
 		t.Fail()
 	}
 	defer xmlhandler.Free()
 
-	err = xsdhandler.Validate(xmlhandler, ValidErrDefault)
+	err = xsdhandler.Validate(xmlhandler, libxml2.ValidErrDefault)
 	fmt.Printf("Error OK: %s %s\n", t.Name(), err.Error())
 	if err == nil {
 		t.Fail()

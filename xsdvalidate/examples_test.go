@@ -5,23 +5,22 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/terminalstatic/go-xsd-validate/common"
 	"github.com/terminalstatic/go-xsd-validate/libxml2"
-	xsdvalidate "github.com/terminalstatic/go-xsd-validate/xsdvalidate"
+	"github.com/terminalstatic/go-xsd-validate/xsdvalidate"
 )
 
 // An example on how to use the package.
 // In some situations, e.g. programatically looping over xml documents you might have to explicitly free the handler without defer. You prabably want to call xsdvalidate.Init() and xsdvalidate.Cleanup() only once after app start and before app end.
 func Example() {
-	libxml2 := libxml2.New()
-	defer libxml2.Shutdown()
-	xsdhandler, err := xsdvalidate.NewXsdHandlerUrl("examples/test1_split.xsd", common.ParsErrDefault)
+	l2 := libxml2.New()
+	defer l2.Shutdown()
+	xsdhandler, err := xsdvalidate.NewXsdHandlerUrl("../examples/test1_split.xsd", libxml2.ParsErrDefault)
 	if err != nil {
 		panic(err)
 	}
 	defer xsdhandler.Free()
 
-	xmlFile, err := os.Open("examples/test1_fail2.xml")
+	xmlFile, err := os.Open("../examples/test1_fail2.xml")
 	if err != nil {
 		panic(err)
 	}
@@ -31,13 +30,13 @@ func Example() {
 		panic(err)
 	}
 
-	xmlhandler, err := xsdvalidate.NewXmlHandlerMem(inXml, common.ParsErrDefault)
+	xmlhandler, err := xsdvalidate.NewXmlHandlerMem(inXml, libxml2.ParsErrDefault)
 	if err != nil {
 		panic(err)
 	}
 	defer xmlhandler.Free()
 
-	err = xsdhandler.Validate(xmlhandler, common.ValidErrDefault)
+	err = xsdhandler.Validate(xmlhandler, libxml2.ValidErrDefault)
 	if err != nil {
 		fmt.Println(err)
 	}

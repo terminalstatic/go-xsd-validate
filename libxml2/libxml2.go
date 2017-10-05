@@ -233,8 +233,20 @@ import (
 	"sync"
 	"time"
 	"unsafe"
+)
 
-	"github.com/terminalstatic/go-xsd-validate/common"
+// The type for parser/validation options.
+type Options int16
+
+// The parser options, ParsErrVerbose will slow down parsing considerably!
+const (
+	ParsErrDefault Options = 1 << iota // Default parser error output
+	ParsErrVerbose                     // Verbose parser error output, considerably slower!
+)
+
+// Validation options for possible future enhancements.
+const (
+	ValidErrDefault Options = 1 << iota // Default validation error output
 )
 
 // Wraps a pointer to libxml2's xmlSchemaPtr.
@@ -244,13 +256,13 @@ type SchemaPtr C.xmlSchemaPtr
 type DocPtr C.xmlDocPtr
 
 // Manages Libxml init, cleanup and memory sanity
-type libxml2 struct {
+type Libxml2 struct {
 	sync.Mutex
 	ticker int
 	Quit   chan struct{}
 }
 
-var instance *libxml2 = nil
+var instance *Libxml2 = nil
 var mutex sync.Mutex
 
 // Function for running the gc and malloc_trim
@@ -270,34 +282,36 @@ func gcTicker(seconds int, quit chan struct{}) {
 	}
 }
 
-func New() *libxml2 {
+func New() *Libxml2 {
 	mutex.Lock()
 	defer mutex.Unlock()
 	if instance == nil {
-		instance = &libxml2{ticker: 0}
+		instance = &Libxml2{ticker: 0}
 	}
 	return instance
 }
 
-func NewAndInit(gcSeconds int) {
+func NewInit(gcSeconds int) *Libxml2 {
 	New()
 	if instance == nil {
 		panic(errors.New("Error creating libxml2 struct"))
 	}
 	instance.Init(gcSeconds)
+	return instance
 }
 
-func NewAndDefault() {
+func NewDefault() *Libxml2 {
 	New()
 	if instance == nil {
 		panic(errors.New("Error creating libxml2 struct"))
 	}
 	instance.Init(60)
+	return instance
 
 }
 
 // Initializes libxml2, suggested for multithreading, see http://xmlsoft.org/threads.html. Takes gcSeconds as an argument, when >0 schedules gc and malloc_trim every gcSeconds seconds.
-func (libxml2 *libxml2) Init(gcSeconds int) {
+func (libxml2 *Libxml2) Init(gcSeconds int) {
 	if libxml2 == nil {
 		panic(errors.New("libxml2 struct == nil"))
 	}
@@ -308,7 +322,7 @@ func (libxml2 *libxml2) Init(gcSeconds int) {
 }
 
 // Shuts down libxml2, use this when application ends or libxml2 is not needed anymore.
-func (libxml2 *libxml2) Shutdown() {
+func (libxml2 *Libxml2) Shutdown() {
 	mutex.Lock()
 	defer mutex.Unlock()
 	if libxml2.Quit != nil {
@@ -322,7 +336,7 @@ func (libxml2 *libxml2) Shutdown() {
 }
 
 // Resets the gc and malloc_trim ticker or disables it when gcSeconds is set to 0.
-func (libxml2 *libxml2) Reset(gcSeconds int) {
+func (libxml2 *Libxml2) Reset(gcSeconds int) {
 	libxml2.Lock()
 	defer libxml2.Unlock()
 	if libxml2.Quit != nil {
@@ -350,7 +364,7 @@ func libXml2Cleanup() {
 }
 
 // Helper function for parsing xml
-func ParseXmlMem(inXml []byte, options common.Options) (C.xmlDocPtr, error) {
+func ParseXmlMem(inXml []byte, options Options) (C.xmlDocPtr, error) {
 
 	strXml := C.CString(string(inXml))
 	defer C.free(unsafe.Pointer(strXml))
@@ -365,7 +379,7 @@ func ParseXmlMem(inXml []byte, options common.Options) (C.xmlDocPtr, error) {
 }
 
 // Helper function for parsing the schema
-func ParseUrlSchema(url string, options common.Options) (C.xmlSchemaPtr, error) {
+func ParseUrlSchema(url string, options Options) (C.xmlSchemaPtr, error) {
 	strUrl := C.CString(url)
 	defer C.free(unsafe.Pointer(strUrl))
 

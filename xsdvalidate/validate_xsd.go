@@ -6,7 +6,7 @@
 //
 // libxml2-dev is needed, below an example how to install the latest sources (Ubuntu, change prefix according to where libs and include files are located):
 //  curl -sL ftp://xmlsoft.org/libxml2/libxml2-2.9.5.tar.gz | tar -xzf -
-//  cd ./libxml2-2.9.5/
+//  cd ./libxml4-2.9.5/
 //  ./configure --prefix=/usr  --enable-static --with-threads --with-history
 //  make
 //  sudo make install
@@ -16,7 +16,6 @@ import "C"
 import (
 	"errors"
 
-	"github.com/terminalstatic/go-xsd-validate/common"
 	"github.com/terminalstatic/go-xsd-validate/libxml2"
 )
 
@@ -33,7 +32,7 @@ type XmlHandler struct {
 // Initialize the xml handler struct.
 // Always use the Free() method when done using this handler or memory will be leaking.
 // The go garbage collector will not collect the allocated resources.
-func NewXmlHandlerMem(inXml []byte, options common.Options) (*XmlHandler, error) {
+func NewXmlHandlerMem(inXml []byte, options libxml2.Options) (*XmlHandler, error) {
 	xPtr, err := libxml2.ParseXmlMem(inXml, options)
 	docPtr := libxml2.DocPtr(xPtr)
 	return &XmlHandler{&docPtr}, err
@@ -42,7 +41,7 @@ func NewXmlHandlerMem(inXml []byte, options common.Options) (*XmlHandler, error)
 // Initialize the xml handler struct.
 // Always use Free() method when done using this handler or memory will be leaking.
 // The go garbage collector will not collect the allocated resources.
-func NewXsdHandlerUrl(url string, options common.Options) (*XsdHandler, error) {
+func NewXsdHandlerUrl(url string, options libxml2.Options) (*XsdHandler, error) {
 	sPtr, err := libxml2.ParseUrlSchema(url, options)
 	schemaPtr := libxml2.SchemaPtr(sPtr)
 	return &XsdHandler{&schemaPtr}, err
@@ -50,7 +49,7 @@ func NewXsdHandlerUrl(url string, options common.Options) (*XsdHandler, error) {
 
 // The validation method validates an xmlHandler against an xsdHandler and returns the libxml2 validation error text.
 // Both xmlHandler and xsdHandler have to be created first with the appropriate New... functions.
-func (xsdHandler *XsdHandler) Validate(xmlHandler *XmlHandler, options common.Options) error {
+func (xsdHandler *XsdHandler) Validate(xmlHandler *XmlHandler, options libxml2.Options) error {
 	if xsdHandler.schemaPtr == nil {
 		return errors.New("Xsd handler not properly initialized, use 'New...'")
 
