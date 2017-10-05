@@ -67,7 +67,7 @@ func (xsdHandler *XsdHandler) Validate(xmlHandler *XmlHandler, options Options) 
 		return errors.New("Xsd handler not properly initialized, use 'New...'")
 
 	}
-	if xsdHandler == nil || xmlHandler.docPtr == nil {
+	if xmlHandler == nil || xmlHandler.docPtr == nil {
 		return errors.New("Xml handler not properly initialized, use 'New...'")
 	}
 	return validateWithXsd(xmlHandler, xsdHandler)
