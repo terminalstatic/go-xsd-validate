@@ -10,9 +10,7 @@
 ## <a name="pkg-overview">Overview</a>
 A simple package for xsd validation, uses libxml2.
 
-The rationale behind this package is to preload xsd files and use their in-memory structure to validate incoming xml documents in a concurrent environment, eg. the post bodys of xml service endpoints, and return useful error messages when appropriate.
-
-This package is part of a rewrite for an online service I'm currently working on. As there are limited resources on how to handle xsd validation in go this might be useful for somebody.
+The rationale behind this package is to preload xsd files and use their in-memory structure to validate incoming xml documents in a concurrent environment, eg. the post bodys of xml service endpoints, and return useful error messages when appropriate. Existing packages either didn't provide error details or got stuck under load.
 
 libxml2-dev is needed, below an example how to install the latest sources (Ubuntu, change prefix according to where libs and include files are located):
 
