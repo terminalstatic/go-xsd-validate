@@ -10,7 +10,7 @@
 //  ./configure --prefix=/usr  --enable-static --with-threads --with-history
 //  make
 //  sudo make install
-package xsdvalidate
+package xsdv
 
 import "C"
 import (

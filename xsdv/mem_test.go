@@ -1,6 +1,6 @@
 // +build memtest
 
-package xsdvalidate
+package xsdv_test
 
 import (
 	"fmt"
@@ -11,11 +11,12 @@ import (
 	"testing"
 
 	"github.com/terminalstatic/go-xsd-validate/libxml2"
+	"github.com/terminalstatic/go-xsd-validate/xsdv"
 )
 
 func TestMemParseXsd(t *testing.T) {
 
-	l2 := l2.NewDefault()
+	l2 := libxml2.NewDefault()
 	defer l2.Shutdown()
 
 	maxGoroutines := 100
@@ -26,8 +27,8 @@ func TestMemParseXsd(t *testing.T) {
 		guard <- struct{}{}
 		wg.Add(1)
 		go func() {
-			//handler, err := NewXsdHandlerUrl("../examples/test1_fail.xsd", libxml2.ParsErrVerbose)
-			handler, err := NewXsdHandlerUrl("../examples/test1_pass.xsd", libxml2.ParsErrVerbose)
+			//handler, err := xsdv.NewXsdHandlerUrl("../examples/test1_fail.xsd", libxml2.ParsErrVerbose)
+			handler, err := xsdv.NewXsdHandlerUrl("../examples/test1_pass.xsd", libxml2.ParsErrVerbose)
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -40,8 +41,8 @@ func TestMemParseXsd(t *testing.T) {
 }
 func TestMemParseXml(t *testing.T) {
 
-	libxml2 := libxml2.NewDefault()
-	defer libxml2.Shutdown()
+	l2 := libxml2.NewDefault()
+	defer l2.Shutdown()
 
 	maxGoroutines := 100
 	guard := make(chan struct{}, maxGoroutines)
@@ -67,8 +68,8 @@ func TestMemParseXml(t *testing.T) {
 		guard <- struct{}{}
 		wg.Add(1)
 		go func(inXml []byte) {
-			xmlhandler, err := NewXmlHandlerMem(inXml, libxml2.ParsErrDefault)
-			//xmlhandler, err := NewXmlHandlerMem(inXml, libxml2.ParsErrVerbose)
+			xmlhandler, err := xsdv.NewXmlHandlerMem(inXml, libxml2.ParsErrDefault)
+			//xmlhandler, err := xsdv.NewXmlHandlerMem(inXml, libxml2.ParsErrVerbose)
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -81,8 +82,8 @@ func TestMemParseXml(t *testing.T) {
 }
 func TestMemValidate(t *testing.T) {
 
-	libxml2 := libxml2.NewDefault()
-	defer libxml2.Shutdown()
+	l2 := libxml2.NewDefault()
+	defer l2.Shutdown()
 
 	maxGoroutines := 100
 	guard := make(chan struct{}, maxGoroutines)
@@ -104,7 +105,7 @@ func TestMemValidate(t *testing.T) {
 		return
 	}
 
-	xsdhandler, err := NewXsdHandlerUrl("../examples/test1_pass.xsd", libxml2.ParsErrDefault)
+	xsdhandler, err := xsdv.NewXsdHandlerUrl("../examples/test1_pass.xsd", libxml2.ParsErrDefault)
 	if err != nil {
 		panic(err)
 	}
@@ -116,7 +117,7 @@ func TestMemValidate(t *testing.T) {
 		guard <- struct{}{}
 		wg.Add(1)
 		go func(inXml []byte) {
-			xmlhandler, err := NewXmlHandlerMem(inXml, libxml2.ParsErrDefault)
+			xmlhandler, err := xsdv.NewXmlHandlerMem(inXml, libxml2.ParsErrDefault)
 			if err != nil {
 				panic(err)
 			}

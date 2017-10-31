@@ -1,6 +1,6 @@
 // +build apitest
 
-package xsdvalidate
+package xsdv
 
 import (
 	"fmt"

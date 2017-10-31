@@ -312,9 +312,6 @@ func NewDefault() *Libxml2 {
 
 // Initializes libxml2, suggested for multithreading, see http://xmlsoft.org/threads.html. Takes gcSeconds as an argument, when >0 schedules gc and malloc_trim every gcSeconds seconds.
 func (libxml2 *Libxml2) Init(gcSeconds int) {
-	if libxml2 == nil {
-		panic(errors.New("libxml2 struct == nil"))
-	}
 	mutex.Lock()
 	defer mutex.Unlock()
 	libxml2.Reset(gcSeconds)

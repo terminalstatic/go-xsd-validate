@@ -1,4 +1,4 @@
-package xsdvalidate_test
+package xsdv_test
 
 import (
 	"fmt"
@@ -6,15 +6,15 @@ import (
 	"os"
 
 	"github.com/terminalstatic/go-xsd-validate/libxml2"
-	"github.com/terminalstatic/go-xsd-validate/xsdvalidate"
+	"github.com/terminalstatic/go-xsd-validate/xsdv"
 )
 
 // An example on how to use the package.
-// In some situations, e.g. programatically looping over xml documents you might have to explicitly free the handler without defer. You prabably want to call xsdvalidate.Init() and xsdvalidate.Cleanup() only once after app start and before app end.
+// In some situations, e.g. programatically looping over xml documents you might have to explicitly free the handler without defer. You prabably want to call xsdv.Init() and xsdv.Cleanup() only once after app start and before app end.
 func Example() {
 	l2 := libxml2.New()
 	defer l2.Shutdown()
-	xsdhandler, err := xsdvalidate.NewXsdHandlerUrl("../examples/test1_split.xsd", libxml2.ParsErrDefault)
+	xsdhandler, err := xsdv.NewXsdHandlerUrl("../examples/test1_split.xsd", libxml2.ParsErrDefault)
 	if err != nil {
 		panic(err)
 	}
@@ -30,7 +30,7 @@ func Example() {
 		panic(err)
 	}
 
-	xmlhandler, err := xsdvalidate.NewXmlHandlerMem(inXml, libxml2.ParsErrDefault)
+	xmlhandler, err := xsdv.NewXmlHandlerMem(inXml, libxml2.ParsErrDefault)
 	if err != nil {
 		panic(err)
 	}
