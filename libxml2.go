@@ -90,6 +90,7 @@ static struct xsdParserResult cParseUrlSchema(const char *url, const short int o
 		xmlSchemaSetParserErrors(schemaParserCtxt, genErrorCallback, noOutputCallback, ectx);
 
 		schema = xmlSchemaParse(schemaParserCtxt);
+		errno = 0;
 
 		xmlSchemaFreeParserCtxt(schemaParserCtxt);
 		if (schema == NULL) {
