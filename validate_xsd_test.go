@@ -139,3 +139,16 @@ func TestValidateWithXsdHandlerFail(t *testing.T) {
 		t.Fail()
 	}
 }
+func TestIsInitialized(t *testing.T) {
+	if err := Init(); err != nil {
+		t.Fail()
+	}
+	if err := Init(); err == nil {
+		t.Fail()
+	}
+	Cleanup()
+	if err := Init(); err != nil {
+		t.Fail()
+	}
+	Cleanup()
+}

@@ -15,8 +15,10 @@ package xsdvalidate
 import "C"
 import (
 	"errors"
-	"log"
+	"sync/atomic"
 )
+
+var isInitialized uint32
 
 // The type for parser/validation options.
 type Options int16
@@ -33,21 +35,30 @@ const (
 )
 
 // Initializes the libxml2 parser, suggested for multithreading, see http://xmlsoft.org/threads.html.
-func Init() {
-	log.Printf("Initializing the libxml2 parser")
-	libXml2Init()
+func Init() error {
+	if atomic.LoadUint32(&isInitialized) == 0 {
+		libXml2Init()
+		atomic.StoreUint32(&isInitialized, 1)
+	} else {
+		return errors.New("Libxml2 already initialized")
+	}
+	return nil
 }
 
 // Cleans up the libxml2 parser, use this when application ends or libxml2 is not needed anymore.
 func Cleanup() {
-	log.Printf("Cleaning up the libxml2 parser")
 	libXml2Cleanup()
+	atomic.StoreUint32(&isInitialized, 0)
 }
 
 // Initialize the xml handler struct.
 // Always use the Free() method when done using this handler or memory will be leaking.
 // The go garbage collector will not collect the allocated resources.
 func NewXmlHandlerMem(inXml []byte, options Options) (*XmlHandler, error) {
+	if atomic.LoadUint32(&isInitialized) == 0 {
+		return nil, errors.New("Libxml2 not initialized")
+	}
+
 	xPtr, err := parseXmlMem(inXml, options)
 	return &XmlHandler{xPtr}, err
 }
@@ -56,6 +67,9 @@ func NewXmlHandlerMem(inXml []byte, options Options) (*XmlHandler, error) {
 // Always use Free() method when done using this handler or memory will be leaking.
 // The go garbage collector will not collect the allocated resources.
 func NewXsdHandlerUrl(url string, options Options) (*XsdHandler, error) {
+	if atomic.LoadUint32(&isInitialized) == 0 {
+		return nil, errors.New("Libxml2 not initialized")
+	}
 	sPtr, err := parseUrlSchema(url, options)
 	return &XsdHandler{sPtr}, err
 }
@@ -63,6 +77,9 @@ func NewXsdHandlerUrl(url string, options Options) (*XsdHandler, error) {
 // The validation method validates an xmlHandler against an xsdHandler and returns the libxml2 validation error text.
 // Both xmlHandler and xsdHandler have to be created first with the appropriate New... functions.
 func (xsdHandler *XsdHandler) Validate(xmlHandler *XmlHandler, options Options) error {
+	if atomic.LoadUint32(&isInitialized) == 0 {
+		return errors.New("Libxml2 not initialized")
+	}
 	if xsdHandler == nil || xsdHandler.schemaPtr == nil {
 		return errors.New("Xsd handler not properly initialized, use 'New...'")
 
