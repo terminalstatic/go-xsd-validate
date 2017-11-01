@@ -3,13 +3,14 @@
 package xsdvalidate
 
 import (
-	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 	"sync"
 	"testing"
 )
+
+const iterations = 1000000
 
 func TestMemParseXsd(t *testing.T) {
 
@@ -21,14 +22,14 @@ func TestMemParseXsd(t *testing.T) {
 	guard := make(chan struct{}, maxGoroutines)
 	var wg sync.WaitGroup
 
-	for i := 0; i < 1000000; i++ {
+	for i := 0; i < iterations; i++ {
 		guard <- struct{}{}
 		wg.Add(1)
 		go func() {
 			//handler, err := NewXsdHandlerUrl("examples/test1_fail.xsd", ParsErrVerbose)
-			handler, err := NewXsdHandlerUrl("examples/test1_pass.xsd", ParsErrVerbose)
+			handler, err := NewXsdHandlerUrl("examples/test1_pass.xsd", ParsErrDefault)
 			if err != nil {
-				fmt.Println(err)
+				//fmt.Println(err)
 			}
 			handler.Free()
 			<-guard
@@ -63,14 +64,14 @@ func TestMemParseXml(t *testing.T) {
 		return
 	}
 
-	for i := 0; i < 1000000; i++ {
+	for i := 0; i < iterations; i++ {
 		guard <- struct{}{}
 		wg.Add(1)
 		go func(inXml []byte) {
 			xmlhandler, err := NewXmlHandlerMem(inXml, ParsErrDefault)
 			//xmlhandler, err := NewXmlHandlerMem(inXml, ParsErrVerbose)
 			if err != nil {
-				fmt.Println(err)
+				//fmt.Println(err)
 			}
 			xmlhandler.Free()
 			<-guard
@@ -113,7 +114,7 @@ func TestMemValidate(t *testing.T) {
 	defer xsdhandler.Free()
 
 	wg.Add(1)
-	for i := 0; i < 100000000; i++ {
+	for i := 0; i < iterations; i++ {
 		guard <- struct{}{}
 		wg.Add(1)
 		go func(inXml []byte) {
@@ -123,7 +124,7 @@ func TestMemValidate(t *testing.T) {
 			}
 			err = xsdhandler.Validate(xmlhandler, ValidErrDefault)
 			if err != nil {
-				log.Print(err)
+				//log.Print(err)
 			}
 			xmlhandler.Free()
 			<-guard

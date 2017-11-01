@@ -6,6 +6,7 @@ package xsdvalidate
 #include <libxml/xmlschemastypes.h>
 #include <errno.h>
 #include <malloc.h>
+#include <stdbool.h>
 #define GO_ERR_INIT 256
 #define P_ERR_EXT 2
 #define LIBXML_STATIC
@@ -63,6 +64,7 @@ static void genErrorCallback(void *ctx, const char *message, ...) {
 }
 
 static struct xsdParserResult cParseUrlSchema(const char *url, const short int options) {
+	bool err = false;
 	struct xsdParserResult parserResult;
 	char *errBuf=NULL;
 	struct errCtx *ectx=malloc(sizeof(struct errCtx));
@@ -76,7 +78,7 @@ static struct xsdParserResult cParseUrlSchema(const char *url, const short int o
 	schemaParserCtxt = xmlSchemaNewParserCtxt(url);
 
 	if (schemaParserCtxt == NULL) {
-		errno = -1;
+		err = true;
 		strcpy(ectx->errBuf, "Xsd parser internal error");
 	}
 	else
@@ -90,11 +92,10 @@ static struct xsdParserResult cParseUrlSchema(const char *url, const short int o
 		xmlSchemaSetParserErrors(schemaParserCtxt, genErrorCallback, noOutputCallback, ectx);
 
 		schema = xmlSchemaParse(schemaParserCtxt);
-		errno = 0;
 
 		xmlSchemaFreeParserCtxt(schemaParserCtxt);
 		if (schema == NULL) {
-			errno = -1;
+			err = true;
 			char *tmp = NULL;
 			if (options & P_ERR_EXT) {
 				tmp = (char *) malloc(strlen(ectx->errBuf) + strlen(genEctx->errBuf) + 1);
@@ -117,10 +118,12 @@ static struct xsdParserResult cParseUrlSchema(const char *url, const short int o
 	free(genEctx);
 	parserResult.schemaPtr=schema;
 	parserResult.errorStr=errBuf;
+	errno = err ? -1 : 0;
 	return parserResult;
 }
 
 static struct xmlParserResult cParseDoc(const char *goXmlSource, const int goXmlSourceLen, const short int options) {
+	bool err = false;
 	struct xmlParserResult parserResult;
 	char *errBuf=NULL;
 	struct errCtx *ectx=malloc(sizeof(struct errCtx));
@@ -133,7 +136,7 @@ static struct xmlParserResult cParseDoc(const char *goXmlSource, const int goXml
 	xmlParserCtxt = xmlNewParserCtxt();
 
 	if (xmlParserCtxt == NULL) {
-		errno = -1;
+		err = true;
 		strcpy(ectx->errBuf, "Xml parser internal error");
 	}
 	else
@@ -150,13 +153,13 @@ static struct xmlParserResult cParseDoc(const char *goXmlSource, const int goXml
 
 		if (doc == NULL) {
 			if (options & P_ERR_EXT) {
-				errno = -1;
+				err = true;
 				char *tmp = malloc(strlen(ectx->errBuf) + 1);
 				memcpy(tmp, ectx->errBuf, strlen(ectx->errBuf) + 1);
 				free(ectx->errBuf);
 				ectx->errBuf = tmp;
 			} else {
-				errno = -1;
+				err = true;
 				strcpy(ectx->errBuf, "Malformed xml document");
 			}
 		}
@@ -168,21 +171,23 @@ static struct xmlParserResult cParseDoc(const char *goXmlSource, const int goXml
 	free(ectx);
 	parserResult.docPtr=doc;
 	parserResult.errorStr=errBuf;
+	errno = err ? -1 : 0;
 	return parserResult;
 }
 
 static char *cValidate(const xmlDocPtr doc, const xmlSchemaPtr schema) {
+	bool err = false;
 	char *errBuf=NULL;
 	struct errCtx *ectx=malloc(sizeof(struct errCtx));
 	ectx->errBuf=calloc(GO_ERR_INIT, sizeof(char));
 	int schemaErr=0;
 
 	if (schema == NULL) {
-		errno = -1;
+		err = true;
 		strcpy(ectx->errBuf, "Xsd schema null pointer");
 	}
 	else if (doc == NULL) {
-		errno = -1;
+		err = true;
 		strcpy(ectx->errBuf, "Xml schema null pointer");
 	}
 	else
@@ -191,7 +196,7 @@ static char *cValidate(const xmlDocPtr doc, const xmlSchemaPtr schema) {
 		schemaCtxt = xmlSchemaNewValidCtxt(schema);
 
 		if (schemaCtxt == NULL) {
-			errno = -1;
+			err = true;
 			strcpy(ectx->errBuf, "Xml validation internal error");
 		}
 		else
@@ -202,17 +207,13 @@ static char *cValidate(const xmlDocPtr doc, const xmlSchemaPtr schema) {
 
 			xmlSchemaFreeValidCtxt(schemaCtxt);
 
-			if (schemaErr == 0)
+			if (schemaErr > 0)
 			{
-				errno = 0;
+				err = true;
 			}
-			else if (schemaErr > 0)
+			else if (schemaErr < 0)
 			{
-				errno = -1;
-			}
-			else
-			{
-				errno = -1;
+				err = true;
 				strcpy(ectx->errBuf, "Xml validation internal error");
 			}
 		}
@@ -222,6 +223,7 @@ static char *cValidate(const xmlDocPtr doc, const xmlSchemaPtr schema) {
 	memcpy(errBuf,  ectx->errBuf, strlen(ectx->errBuf)+1);
 	free(ectx->errBuf);
 	free(ectx);
+	errno = err ? -1 : 0;
 	return errBuf;
 }
 */
