@@ -26,7 +26,7 @@ libxml2-dev is needed, below an example how to install the latest sources (Ubunt
 
 ## <a name="pkg-index">Index</a>
 * [func Cleanup()](#Cleanup)
-* [func Init()](#Init)
+* [func Init() error](#Init)
 * [type Options](#Options)
 * [type XmlHandler](#XmlHandler)
   * [func NewXmlHandlerMem(inXml []byte, options Options) (*XmlHandler, error)](#NewXmlHandlerMem)
@@ -99,7 +99,7 @@ Cleans up the libxml2 parser, use this when application ends or libxml2 is not n
 
 ## <a name="Init">func</a> [Init](validate_xsd.go?s=1475:1486#L36)
 ``` go
-func Init()
+func Init() error
 ```
 Initializes the libxml2 parser, suggested for multithreading, see (http://xmlsoft.org/threads.html).
 
