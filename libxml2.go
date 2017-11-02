@@ -229,9 +229,14 @@ static char *cValidate(const xmlDocPtr doc, const xmlSchemaPtr schema) {
 */
 import "C"
 import (
-	"errors"
+	"github.com/pkg/errors"
 	"strings"
 	"unsafe"
+)
+
+var (
+	ErrValidation = errors.New("validation error")
+	ErrParser     = errors.New("Xml parser error")
 )
 
 // Handles schema parsing and validation, wraps a pointer to libxml2's xmlSchemaPtr.
@@ -264,7 +269,7 @@ func parseXmlMem(inXml []byte, options Options) (C.xmlDocPtr, error) {
 	defer C.free(unsafe.Pointer(pRes.errorStr))
 	if err != nil {
 		rStr := C.GoString(pRes.errorStr)
-		return nil, errors.New("Xml parser error:\n" + strings.Trim(rStr, "\n"))
+		return nil, errors.Wrap(ErrParser, strings.Trim(rStr, "\n"))
 	}
 	return pRes.docPtr, nil
 }
@@ -278,7 +283,7 @@ func parseUrlSchema(url string, options Options) (C.xmlSchemaPtr, error) {
 	defer C.free(unsafe.Pointer(pRes.errorStr))
 	if err != nil {
 		rStr := C.GoString(pRes.errorStr)
-		return nil, errors.New("Xsd parser error:\n" + strings.Trim(rStr, "\n"))
+		return nil, errors.Wrap(ErrParser, strings.Trim(rStr, "\n"))
 	}
 	return pRes.schemaPtr, nil
 }
@@ -291,7 +296,7 @@ func validateWithXsd(xmlHandler *XmlHandler, xsdHandler *XsdHandler) error {
 	defer C.free(unsafe.Pointer(sPtr))
 	if err != nil {
 		rStr := C.GoString(sPtr)
-		return errors.New("Validation error:\n" + strings.Trim(rStr, "\n"))
+		return errors.Wrap(ErrValidation, strings.Trim(rStr, "\n"))
 	}
 	return nil
 }
