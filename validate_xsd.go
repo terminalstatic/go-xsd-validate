@@ -17,6 +17,10 @@ import (
 )
 
 var isInitialized uint32
+var (
+	ErrLibXml2NotInitialized            = errors.New("libxml2 not initialized")
+	ErrXsdHandlerNotProperlyInitialized = errors.New("xsd handler not properly initialized")
+)
 
 // The type for parser/validation options.
 type Options int16
@@ -38,7 +42,7 @@ func Init() error {
 		libXml2Init()
 		atomic.StoreUint32(&isInitialized, 1)
 	} else {
-		return errors.New("Libxml2 already initialized")
+		return ErrLibXml2NotInitialized
 	}
 	return nil
 }
@@ -54,7 +58,7 @@ func Cleanup() {
 // The go garbage collector will not collect the allocated resources.
 func NewXmlHandlerMem(inXml []byte, options Options) (*XmlHandler, error) {
 	if atomic.LoadUint32(&isInitialized) == 0 {
-		return nil, errors.New("Libxml2 not initialized")
+		return nil, ErrLibXml2NotInitialized
 	}
 
 	xPtr, err := parseXmlMem(inXml, options)
@@ -66,7 +70,7 @@ func NewXmlHandlerMem(inXml []byte, options Options) (*XmlHandler, error) {
 // The go garbage collector will not collect the allocated resources.
 func NewXsdHandlerUrl(url string, options Options) (*XsdHandler, error) {
 	if atomic.LoadUint32(&isInitialized) == 0 {
-		return nil, errors.New("Libxml2 not initialized")
+		return nil, ErrLibXml2NotInitialized
 	}
 	sPtr, err := parseUrlSchema(url, options)
 	return &XsdHandler{sPtr}, err
@@ -76,14 +80,13 @@ func NewXsdHandlerUrl(url string, options Options) (*XsdHandler, error) {
 // Both xmlHandler and xsdHandler have to be created first with the appropriate New... functions.
 func (xsdHandler *XsdHandler) Validate(xmlHandler *XmlHandler, options Options) error {
 	if atomic.LoadUint32(&isInitialized) == 0 {
-		return errors.New("Libxml2 not initialized")
+		return ErrLibXml2NotInitialized
 	}
 	if xsdHandler == nil || xsdHandler.schemaPtr == nil {
-		return errors.New("Xsd handler not properly initialized")
-
+		return ErrXsdHandlerNotProperlyInitialized
 	}
 	if xmlHandler == nil || xmlHandler.docPtr == nil {
-		return errors.New("Xml handler not properly initialized")
+		return ErrXsdHandlerNotProperlyInitialized
 	}
 	return validateWithXsd(xmlHandler, xsdHandler)
 

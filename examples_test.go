@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/pkg/errors"
 	"github.com/terminalstatic/go-xsd-validate"
 )
 
@@ -37,9 +38,10 @@ func Example() {
 
 	err = xsdhandler.Validate(xmlhandler, xsdvalidate.ValidErrDefault)
 	if err != nil {
+		fmt.Println(errors.Cause(err))
 		fmt.Println(err)
 	}
 	// Output:
-	// Validation error:
-	// Element 'shipto': This element is not expected. Expected is ( orderperson ).
+	// validation error
+	// Element 'shipto': This element is not expected. Expected is ( orderperson ).: validation error
 }
