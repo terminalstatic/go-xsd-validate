@@ -107,6 +107,40 @@ func TestValidateWithXsdHandlerPass(t *testing.T) {
 
 }
 
+func TestValidateWithXsdHandlerHttpPass(t *testing.T) {
+	Init()
+	defer Cleanup()
+
+	xsdhandler, err := NewXsdHandlerUrl("http://schemas.opengis.net/cat/csw/3.0/cswAll.xsd", ParsErrDefault)
+	if err != nil {
+		fmt.Printf("Error: %s %s\n", t.Name(), err.Error())
+		t.Fail()
+	}
+	defer xsdhandler.Free()
+
+	xmlFile, err := os.Open("examples/test_csw.xml")
+	if err != nil {
+		fmt.Printf("Error: %s %s\n", t.Name(), err.Error())
+		return
+	}
+	defer xmlFile.Close()
+	inXml, _ := ioutil.ReadAll(xmlFile)
+
+	xmlhandler, err := NewXmlHandlerMem(inXml, ParsErrVerbose)
+	if err != nil {
+		fmt.Printf("Error: %s %s\n", t.Name(), err.Error())
+		t.Fail()
+	}
+	defer xmlhandler.Free()
+
+	err = xsdhandler.Validate(xmlhandler, ValidErrDefault)
+	if err != nil {
+		fmt.Printf("Error: %s %s\n", t.Name(), err.Error())
+		t.Fail()
+	}
+
+}
+
 func TestValidateWithXsdHandlerFail(t *testing.T) {
 	Init()
 	defer Cleanup()

@@ -1,8 +1,6 @@
 // A simple package for xsd validation, uses libxml2.
 //
-// The rationale behind this package is to preload xsd files and use their in-memory structure to validate incoming xml documents in a concurrent environment, eg. the post bodys of xml service endpoints, and return useful error messages when appropriate.
-//
-// This package is part of a rewrite for an online service I'm currently working on. As there are limited resources on how to handle xsd validation in go this might be useful for somebody.
+// The rationale behind this package is to preload xsd files and use their in-memory structure to validate incoming xml documents in a concurrent environment, eg. the post bodys of xml service endpoints, and return useful error messages when appropriate. Existing packages either didn't provide error details or got stuck under load.
 //
 // libxml2-dev is needed, below an example how to install the latest sources (Ubuntu, change prefix according to where libs and include files are located):
 //  curl -sL ftp://xmlsoft.org/libxml2/libxml2-2.9.5.tar.gz | tar -xzf -
@@ -81,11 +79,11 @@ func (xsdHandler *XsdHandler) Validate(xmlHandler *XmlHandler, options Options) 
 		return errors.New("Libxml2 not initialized")
 	}
 	if xsdHandler == nil || xsdHandler.schemaPtr == nil {
-		return errors.New("Xsd handler not properly initialized, use 'New...'")
+		return errors.New("Xsd handler not properly initialized")
 
 	}
 	if xmlHandler == nil || xmlHandler.docPtr == nil {
-		return errors.New("Xml handler not properly initialized, use 'New...'")
+		return errors.New("Xml handler not properly initialized")
 	}
 	return validateWithXsd(xmlHandler, xsdHandler)
 

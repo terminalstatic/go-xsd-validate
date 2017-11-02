@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GetRecords
+service="CSW"
+version="3.0.0"
+xmlns="http://www.opengis.net/cat/csw/3.0" 
+xmlns:csw="http://www.opengis.net/cat/csw/3.0"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+xsi:schemaLocation="http://www.opengis.net/cat/csw/3.0
+http://schemas.opengis.net/cat/csw/3.0/cswAll.xsd">
+<csw:Query typeNames="csw:Record">
+<csw:ElementSetName typeNames="csw:Record">full</csw:ElementSetName>
+</csw:Query>
+</GetRecords>
