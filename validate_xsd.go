@@ -14,6 +14,7 @@ import "C"
 import (
 	"errors"
 	"sync/atomic"
+	"time"
 )
 
 var isInitialized uint32
@@ -32,8 +33,11 @@ const (
 	ValidErrDefault Options = 1 << iota // Default validation error output
 )
 
-// Initializes the libxml2 parser, suggested for multithreading, see http://xmlsoft.org/threads.html.
+var quit chan struct{}
+
+// Initializes libxml2, suggested for multithreading, see http://xmlsoft.org/threads.html.
 func Init() error {
+	//runtime.GOMAXPROCS(2)
 	if atomic.LoadUint32(&isInitialized) == 0 {
 		libXml2Init()
 		atomic.StoreUint32(&isInitialized, 1)
@@ -43,10 +47,21 @@ func Init() error {
 	return nil
 }
 
+// Initializes lbxml2 with a goroutine which trims memory and runs the go gc every d duration.
+// Helps to keep the memory footprint reasonable when doing millions of operations.
+func InitWithGc(d time.Duration) {
+	quit = make(chan struct{})
+	go gcTicker(d, quit)
+}
+
 // Cleans up the libxml2 parser, use this when application ends or libxml2 is not needed anymore.
 func Cleanup() {
 	libXml2Cleanup()
 	atomic.StoreUint32(&isInitialized, 0)
+	if quit != nil {
+		quit <- struct{}{}
+		quit = nil
+	}
 }
 
 // Initialize the xml handler struct.

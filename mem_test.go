@@ -3,22 +3,25 @@
 package xsdvalidate
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
+	"strings"
 	"sync"
+	"syscall"
 	"testing"
 )
 
-const iterations = 1000000
+const iterations = 20
+const maxGoroutines = 100
 
 func TestMemParseXsd(t *testing.T) {
-
+	fmt.Println("Now Running TestMemParseXsd")
 	Init()
 
 	defer Cleanup()
 
-	maxGoroutines := 100
 	guard := make(chan struct{}, maxGoroutines)
 	var wg sync.WaitGroup
 
@@ -39,12 +42,11 @@ func TestMemParseXsd(t *testing.T) {
 	wg.Wait()
 }
 func TestMemParseXml(t *testing.T) {
-
+	fmt.Println("Now Running TestMemParseXml")
 	Init()
 
 	defer Cleanup()
 
-	maxGoroutines := 100
 	guard := make(chan struct{}, maxGoroutines)
 	var wg sync.WaitGroup
 
@@ -81,12 +83,11 @@ func TestMemParseXml(t *testing.T) {
 	wg.Wait()
 }
 func TestMemValidate(t *testing.T) {
-
+	fmt.Println("Now Running TestMemValidate")
 	Init()
 
 	defer Cleanup()
 
-	maxGoroutines := 100
 	guard := make(chan struct{}, maxGoroutines)
 	var wg sync.WaitGroup
 
@@ -113,14 +114,13 @@ func TestMemValidate(t *testing.T) {
 
 	defer xsdhandler.Free()
 
-	wg.Add(1)
 	for i := 0; i < iterations; i++ {
 		guard <- struct{}{}
 		wg.Add(1)
 		go func(inXml []byte) {
 			xmlhandler, err := NewXmlHandlerMem(inXml, ParsErrDefault)
 			if err != nil {
-				panic(err)
+				//panic(err)
 			}
 			err = xsdhandler.Validate(xmlhandler, ValidErrDefault)
 			if err != nil {
@@ -130,6 +130,92 @@ func TestMemValidate(t *testing.T) {
 			<-guard
 			wg.Done()
 		}(inXml)
+		/*if i > 0 && (i%1000000) == 0 {
+			fmt.Println("Test paused ...\a\n")
+			time.Sleep(30 * time.Second)
+		}*/
+	}
+	wg.Wait()
+}
+func TestMemAltValidate(t *testing.T) {
+	fmt.Println("Now Running TestMemAltValidate")
+	Init()
+
+	fmt.Println(syscall.Gettid())
+	defer Cleanup()
+
+	guard := make(chan struct{}, maxGoroutines)
+	var wg sync.WaitGroup
+
+	xmlfile1 := "examples/test1_fail2.xml"
+
+	fxml1, err := os.Open(xmlfile1)
+	if err != nil {
+		log.Printf("failed to open file: %s", err)
+		return
+	}
+	defer fxml1.Close()
+
+	inXml1, err := ioutil.ReadAll(fxml1)
+	if err != nil {
+		log.Printf("failed to read file: %s", err)
+		return
+	}
+
+	xmlfile2 := "examples/test1_fail3.xml"
+
+	fxml2, err := os.Open(xmlfile2)
+	if err != nil {
+		log.Printf("failed to open file: %s", err)
+		return
+	}
+	defer fxml2.Close()
+
+	inXml2, err := ioutil.ReadAll(fxml2)
+	if err != nil {
+		log.Printf("failed to read file: %s", err)
+		return
+	}
+
+	xsdhandler, err := NewXsdHandlerUrl("examples/test1_pass.xsd", ParsErrDefault)
+	if err != nil {
+		panic(err)
+	}
+
+	defer xsdhandler.Free()
+
+	for i := 0; i < iterations; i++ {
+		guard <- struct{}{}
+		wg.Add(1)
+
+		var inXml []byte
+		if i%2 == 0 {
+			inXml = inXml1
+		} else {
+			inXml = inXml2
+		}
+		go func(inXml []byte, i int) {
+			xmlhandler, err := NewXmlHandlerMem(inXml, ParsErrDefault)
+			if err != nil {
+				//panic(err)
+			}
+			err = xsdhandler.Validate(xmlhandler, ValidErrDefault)
+			if err != nil {
+				if i%2 == 1 {
+					if !strings.Contains(err.Error(), "Element 'name1'") {
+						panic(err)
+					}
+				} else {
+					if !strings.Contains(err.Error(), "Element 'shipto'") {
+						panic(err)
+					}
+				}
+				//log.Print(err)
+			}
+			xmlhandler.Free()
+			<-guard
+			wg.Done()
+		}(inXml, i)
 		/*if i > 0 && (i%1000000) == 0 {
 			fmt.Println("Test paused ...\a\n")
 			time.Sleep(30 * time.Second)
