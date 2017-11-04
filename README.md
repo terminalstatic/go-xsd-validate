@@ -78,7 +78,7 @@ Code:
 	err = xsdhandler.Validate(xmlhandler, xsdvalidate.ValidErrDefault)
 	if err != nil {
     		fmt.Printf("Error in line: %d\n", err.(xsdvalidate.ValidationError).Line)
-    	fmt.Println(err)
+    		fmt.Println(err)
 	}
 
 #### <a name="pkg-files">Package files</a>
