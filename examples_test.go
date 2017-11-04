@@ -9,7 +9,7 @@ import (
 )
 
 // An example on how to use the package.
-// In some situations, e.g. programatically looping over xml documents you might have to explicitly free the handler without defer. You prabably want to call xsdvalidate.Init() and xsdvalidate.Cleanup() only once after app start and before app end.
+// In some situations, e.g. programatically looping over xml documents you might have to explicitly free the handler without defer. Calling xsdvalidate.Init() is only required once before you start parsing and validating, and xsdvalidate.Cleanup() respectively when finished.
 func Example() {
 	xsdvalidate.Init()
 	defer xsdvalidate.Cleanup()
@@ -37,8 +37,10 @@ func Example() {
 
 	err = xsdhandler.Validate(xmlhandler, xsdvalidate.ValidErrDefault)
 	if err != nil {
+		fmt.Printf("Error in line: %d\n", err.(xsdvalidate.ValidationError).Line)
 		fmt.Println(err)
 	}
 	// Output:
+	// Error in line: 3
 	// Element 'shipto': This element is not expected. Expected is ( orderperson ).
 }

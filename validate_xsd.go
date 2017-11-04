@@ -1,4 +1,4 @@
-// A simple package for xsd validation, uses libxml2.
+// A go package for xsd validation, uses libxml2.
 //
 // The rationale behind this package is to preload xsd files and use their in-memory structure to validate incoming xml documents in a concurrent environment, eg. the post bodys of xml service endpoints, and return useful error messages when appropriate. Existing packages either didn't provide error details or got stuck under load.
 //
@@ -17,19 +17,19 @@ import (
 	"time"
 )
 
-type Guard struct {
+type guard struct {
 	sync.Mutex
 	initialized uint32
 }
 
-func (guard *Guard) isInitialized() bool {
+func (guard *guard) isInitialized() bool {
 	if atomic.LoadUint32(&guard.initialized) == 0 {
 		return false
 	}
 	return true
 }
 
-func (guard *Guard) setInitialized(b bool) {
+func (guard *guard) setInitialized(b bool) {
 	switch b {
 	case true:
 		atomic.StoreUint32(&guard.initialized, 1)
@@ -38,7 +38,7 @@ func (guard *Guard) setInitialized(b bool) {
 	}
 }
 
-var guard Guard
+var g guard
 
 // The type for parser/validation options.
 type Options int16
@@ -58,19 +58,19 @@ var quit chan struct{}
 
 // Initializes libxml2, suggested for multithreading, see http://xmlsoft.org/threads.html.
 func Init() error {
-	guard.Lock()
-	defer guard.Unlock()
-	if guard.isInitialized() {
+	g.Lock()
+	defer g.Unlock()
+	if g.isInitialized() {
 		return Libxml2Error{CommonError{"Libxml2 already initialized"}}
 	}
 
 	libXml2Init()
-	guard.setInitialized(true)
+	g.setInitialized(true)
 	return nil
 }
 
 // Initializes lbxml2 with a goroutine which trims memory and runs the go gc every d duration.
-// Helps to keep the memory footprint reasonable when doing millions of validations.
+// Not required but can help to keep the memory footprint at bay when doing tons of validations.
 func InitWithGc(d time.Duration) {
 	Init()
 	quit = make(chan struct{})
@@ -79,10 +79,10 @@ func InitWithGc(d time.Duration) {
 
 // Cleans up the libxml2 parser, use this when application ends or libxml2 is not needed anymore.
 func Cleanup() {
-	guard.Lock()
-	defer guard.Unlock()
+	g.Lock()
+	defer g.Unlock()
 	libXml2Cleanup()
-	guard.setInitialized(false)
+	g.setInitialized(false)
 	if quit != nil {
 		quit <- struct{}{}
 		quit = nil
@@ -93,7 +93,7 @@ func Cleanup() {
 // Always use the Free() method when done using this handler or memory will be leaking.
 // The go garbage collector will not collect the allocated resources.
 func NewXmlHandlerMem(inXml []byte, options Options) (*XmlHandler, error) {
-	if !guard.isInitialized() {
+	if !g.isInitialized() {
 		return nil, Libxml2Error{CommonError{"Libxml2 not initialized"}}
 	}
 
@@ -105,7 +105,7 @@ func NewXmlHandlerMem(inXml []byte, options Options) (*XmlHandler, error) {
 // Always use Free() method when done using this handler or memory will be leaking.
 // The go garbage collector will not collect the allocated resources.
 func NewXsdHandlerUrl(url string, options Options) (*XsdHandler, error) {
-	if !guard.isInitialized() {
+	if !g.isInitialized() {
 		return nil, Libxml2Error{CommonError{"Libxml2 not initialized"}}
 	}
 	sPtr, err := parseUrlSchema(url, options)
@@ -113,9 +113,9 @@ func NewXsdHandlerUrl(url string, options Options) (*XsdHandler, error) {
 }
 
 // The validation method validates an xmlHandler against an xsdHandler and returns the libxml2 validation error text.
-// Both xmlHandler and xsdHandler have to be created first with the appropriate New... functions.
+// Both xmlHandler and xsdHandler have to be created first.
 func (xsdHandler *XsdHandler) Validate(xmlHandler *XmlHandler, options Options) error {
-	if !guard.isInitialized() {
+	if !g.isInitialized() {
 		return Libxml2Error{CommonError{"Libxml2 not initialized"}}
 	}
 
