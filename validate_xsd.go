@@ -12,7 +12,6 @@ package xsdvalidate
 
 import "C"
 import (
-	"errors"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -62,7 +61,7 @@ func Init() error {
 	guard.Lock()
 	defer guard.Unlock()
 	if guard.isInitialized() {
-		return errors.New("Libxml2 already initialized")
+		return Libxml2Error{CommonError{"Libxml2 already initialized"}}
 	}
 
 	libXml2Init()
@@ -95,7 +94,7 @@ func Cleanup() {
 // The go garbage collector will not collect the allocated resources.
 func NewXmlHandlerMem(inXml []byte, options Options) (*XmlHandler, error) {
 	if !guard.isInitialized() {
-		return nil, errors.New("Libxml2 not initialized")
+		return nil, Libxml2Error{CommonError{"Libxml2 not initialized"}}
 	}
 
 	xPtr, err := parseXmlMem(inXml, options)
@@ -107,7 +106,7 @@ func NewXmlHandlerMem(inXml []byte, options Options) (*XmlHandler, error) {
 // The go garbage collector will not collect the allocated resources.
 func NewXsdHandlerUrl(url string, options Options) (*XsdHandler, error) {
 	if !guard.isInitialized() {
-		return nil, errors.New("Libxml2 not initialized")
+		return nil, Libxml2Error{CommonError{"Libxml2 not initialized"}}
 	}
 	sPtr, err := parseUrlSchema(url, options)
 	return &XsdHandler{sPtr}, err
@@ -117,36 +116,18 @@ func NewXsdHandlerUrl(url string, options Options) (*XsdHandler, error) {
 // Both xmlHandler and xsdHandler have to be created first with the appropriate New... functions.
 func (xsdHandler *XsdHandler) Validate(xmlHandler *XmlHandler, options Options) error {
 	if !guard.isInitialized() {
-		return errors.New("Libxml2 not initialized")
+		return Libxml2Error{CommonError{"Libxml2 not initialized"}}
 	}
 
 	if xsdHandler == nil || xsdHandler.schemaPtr == nil {
-		return errors.New("Xsd handler not properly initialized")
+		return XsdParserError{CommonError{"Xsd handler not properly initialized"}}
 
 	}
 	if xmlHandler == nil || xmlHandler.docPtr == nil {
-		return errors.New("Xml handler not properly initialized")
+		return XmlParserError{CommonError{"Xml handler not properly initialized"}}
 	}
-	return validateWithXsd(xmlHandler, xsdHandler, func(ve ValidationError) string { return ve.Message })
+	return validateWithXsd(xmlHandler, xsdHandler)
 
-}
-
-// The validation method validates an xmlHandler against an xsdHandler and returns the libxml2 validation error text.
-// Both xmlHandler and xsdHandler have to be created first with the appropriate New... functions.
-// Takes a function that gets called by the ValidationError string method
-func (xsdHandler *XsdHandler) ValidateWithCustomError(xmlHandler *XmlHandler, options Options, errStringFunc func(ve ValidationError) string) error {
-	if !guard.isInitialized() {
-		return errors.New("Libxml2 not initialized")
-	}
-
-	if xsdHandler == nil || xsdHandler.schemaPtr == nil {
-		return errors.New("Xsd handler not properly initialized")
-
-	}
-	if xmlHandler == nil || xmlHandler.docPtr == nil {
-		return errors.New("Xml handler not properly initialized")
-	}
-	return validateWithXsd(xmlHandler, xsdHandler, errStringFunc)
 }
 
 // Frees the schemaPtr, call this when this handler is not needed anymore.

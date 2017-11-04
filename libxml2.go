@@ -310,46 +310,6 @@ type XmlHandler struct {
 	docPtr C.xmlDocPtr
 }
 
-type ParserError struct {
-	Message string
-}
-
-func (pe ParserError) String() string {
-	return pe.Message
-}
-
-func (pe ParserError) Error() string {
-	return pe.String()
-}
-
-type XmlParserError struct {
-	ParserError
-}
-
-type XsdParserError struct {
-	ParserError
-}
-
-// The validation error, to access the fields use type assertion
-type ValidationError struct {
-	Code          int
-	Message       string
-	Level         int
-	Line          int
-	NodeName      string
-	errStringFunc func(ValidationError) string
-}
-
-// Implementation of Stringer interface
-func (ve ValidationError) String() string {
-	return ve.errStringFunc(ve)
-}
-
-// Implementation of Error interface
-func (ve ValidationError) Error() string {
-	return ve.String()
-}
-
 // Initializes the libxml2 parser, suggested for multithreading
 func libXml2Init() {
 	C.init()
@@ -370,7 +330,7 @@ func parseXmlMem(inXml []byte, options Options) (C.xmlDocPtr, error) {
 	defer C.free(unsafe.Pointer(pRes.errorStr))
 	if err != nil {
 		rStr := C.GoString(pRes.errorStr)
-		return nil, XmlParserError{ParserError{strings.Trim(rStr, "\n")}}
+		return nil, XmlParserError{CommonError{strings.Trim(rStr, "\n")}}
 	}
 	return pRes.docPtr, nil
 }
@@ -384,22 +344,22 @@ func parseUrlSchema(url string, options Options) (C.xmlSchemaPtr, error) {
 	defer C.free(unsafe.Pointer(pRes.errorStr))
 	if err != nil {
 		rStr := C.GoString(pRes.errorStr)
-		return nil, XsdParserError{ParserError{strings.Trim(rStr, "\n")}}
+		return nil, XsdParserError{CommonError{strings.Trim(rStr, "\n")}}
 	}
 	return pRes.schemaPtr, nil
 }
 
 // Helper function for validating given an xml document
-func validateWithXsd(xmlHandler *XmlHandler, xsdHandler *XsdHandler, errStringFunc func(ValidationError) string) error {
+func validateWithXsd(xmlHandler *XmlHandler, xsdHandler *XsdHandler) error {
 	sErr, err := C.cValidate(xmlHandler.docPtr, xsdHandler.schemaPtr)
 	defer freeSimpleXmlError(sErr)
 	if err != nil {
 		return ValidationError{Code: int(sErr.code),
-			Message:       strings.Trim(C.GoString(sErr.message), "\n"),
-			Level:         int(sErr.level),
-			Line:          int(sErr.line),
-			NodeName:      C.GoString(sErr.node),
-			errStringFunc: errStringFunc}
+			Message:  strings.Trim(C.GoString(sErr.message), "\n"),
+			Level:    int(sErr.level),
+			Line:     int(sErr.line),
+			NodeName: C.GoString(sErr.node),
+		}
 	}
 	return nil
 }
