@@ -40,6 +40,5 @@ func Example() {
 		fmt.Println(err)
 	}
 	// Output:
-	// Validation error:
 	// Element 'shipto': This element is not expected. Expected is ( orderperson ).
 }

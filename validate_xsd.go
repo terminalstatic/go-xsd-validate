@@ -13,11 +13,33 @@ package xsdvalidate
 import "C"
 import (
 	"errors"
+	"sync"
 	"sync/atomic"
 	"time"
 )
 
-var isInitialized uint32
+type Guard struct {
+	sync.Mutex
+	initialized uint32
+}
+
+func (guard *Guard) isInitialized() bool {
+	if atomic.LoadUint32(&guard.initialized) == 0 {
+		return false
+	}
+	return true
+}
+
+func (guard *Guard) setInitialized(b bool) {
+	switch b {
+	case true:
+		atomic.StoreUint32(&guard.initialized, 1)
+	case false:
+		atomic.StoreUint32(&guard.initialized, 0)
+	}
+}
+
+var guard Guard
 
 // The type for parser/validation options.
 type Options int16
@@ -37,27 +59,31 @@ var quit chan struct{}
 
 // Initializes libxml2, suggested for multithreading, see http://xmlsoft.org/threads.html.
 func Init() error {
-	//runtime.GOMAXPROCS(2)
-	if atomic.LoadUint32(&isInitialized) == 0 {
-		libXml2Init()
-		atomic.StoreUint32(&isInitialized, 1)
-	} else {
+	guard.Lock()
+	defer guard.Unlock()
+	if guard.isInitialized() {
 		return errors.New("Libxml2 already initialized")
 	}
+
+	libXml2Init()
+	guard.setInitialized(true)
 	return nil
 }
 
 // Initializes lbxml2 with a goroutine which trims memory and runs the go gc every d duration.
-// Helps to keep the memory footprint reasonable when doing millions of operations.
+// Helps to keep the memory footprint reasonable when doing millions of validations.
 func InitWithGc(d time.Duration) {
+	Init()
 	quit = make(chan struct{})
 	go gcTicker(d, quit)
 }
 
 // Cleans up the libxml2 parser, use this when application ends or libxml2 is not needed anymore.
 func Cleanup() {
+	guard.Lock()
+	defer guard.Unlock()
 	libXml2Cleanup()
-	atomic.StoreUint32(&isInitialized, 0)
+	guard.setInitialized(false)
 	if quit != nil {
 		quit <- struct{}{}
 		quit = nil
@@ -68,7 +94,7 @@ func Cleanup() {
 // Always use the Free() method when done using this handler or memory will be leaking.
 // The go garbage collector will not collect the allocated resources.
 func NewXmlHandlerMem(inXml []byte, options Options) (*XmlHandler, error) {
-	if atomic.LoadUint32(&isInitialized) == 0 {
+	if !guard.isInitialized() {
 		return nil, errors.New("Libxml2 not initialized")
 	}
 
@@ -80,7 +106,7 @@ func NewXmlHandlerMem(inXml []byte, options Options) (*XmlHandler, error) {
 // Always use Free() method when done using this handler or memory will be leaking.
 // The go garbage collector will not collect the allocated resources.
 func NewXsdHandlerUrl(url string, options Options) (*XsdHandler, error) {
-	if atomic.LoadUint32(&isInitialized) == 0 {
+	if !guard.isInitialized() {
 		return nil, errors.New("Libxml2 not initialized")
 	}
 	sPtr, err := parseUrlSchema(url, options)
@@ -90,9 +116,10 @@ func NewXsdHandlerUrl(url string, options Options) (*XsdHandler, error) {
 // The validation method validates an xmlHandler against an xsdHandler and returns the libxml2 validation error text.
 // Both xmlHandler and xsdHandler have to be created first with the appropriate New... functions.
 func (xsdHandler *XsdHandler) Validate(xmlHandler *XmlHandler, options Options) error {
-	if atomic.LoadUint32(&isInitialized) == 0 {
+	if !guard.isInitialized() {
 		return errors.New("Libxml2 not initialized")
 	}
+
 	if xsdHandler == nil || xsdHandler.schemaPtr == nil {
 		return errors.New("Xsd handler not properly initialized")
 
@@ -100,8 +127,26 @@ func (xsdHandler *XsdHandler) Validate(xmlHandler *XmlHandler, options Options) 
 	if xmlHandler == nil || xmlHandler.docPtr == nil {
 		return errors.New("Xml handler not properly initialized")
 	}
-	return validateWithXsd(xmlHandler, xsdHandler)
+	return validateWithXsd(xmlHandler, xsdHandler, func(ve ValidationError) string { return ve.Message })
 
+}
+
+// The validation method validates an xmlHandler against an xsdHandler and returns the libxml2 validation error text.
+// Both xmlHandler and xsdHandler have to be created first with the appropriate New... functions.
+// Takes a function that gets called by the ValidationError string method
+func (xsdHandler *XsdHandler) ValidateWithCustomError(xmlHandler *XmlHandler, options Options, errStringFunc func(ve ValidationError) string) error {
+	if !guard.isInitialized() {
+		return errors.New("Libxml2 not initialized")
+	}
+
+	if xsdHandler == nil || xsdHandler.schemaPtr == nil {
+		return errors.New("Xsd handler not properly initialized")
+
+	}
+	if xmlHandler == nil || xmlHandler.docPtr == nil {
+		return errors.New("Xml handler not properly initialized")
+	}
+	return validateWithXsd(xmlHandler, xsdHandler, errStringFunc)
 }
 
 // Frees the schemaPtr, call this when this handler is not needed anymore.

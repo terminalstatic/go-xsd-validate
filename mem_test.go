@@ -9,11 +9,10 @@ import (
 	"os"
 	"strings"
 	"sync"
-	"syscall"
 	"testing"
 )
 
-const iterations = 20
+const iterations = 1000000
 const maxGoroutines = 100
 
 func TestMemParseXsd(t *testing.T) {
@@ -141,7 +140,7 @@ func TestMemAltValidate(t *testing.T) {
 	fmt.Println("Now Running TestMemAltValidate")
 	Init()
 
-	fmt.Println(syscall.Gettid())
+	//fmt.Println(syscall.Gettid())
 	defer Cleanup()
 
 	guard := make(chan struct{}, maxGoroutines)
@@ -199,6 +198,7 @@ func TestMemAltValidate(t *testing.T) {
 			if err != nil {
 				//panic(err)
 			}
+			//start := time.Now()
 			err = xsdhandler.Validate(xmlhandler, ValidErrDefault)
 			if err != nil {
 				if i%2 == 1 {
@@ -212,14 +212,12 @@ func TestMemAltValidate(t *testing.T) {
 				}
 				//log.Print(err)
 			}
+			//elapsed := time.Since(start)
+			//log.Printf("Validation took %s", elapsed)
 			xmlhandler.Free()
 			<-guard
 			wg.Done()
 		}(inXml, i)
-		/*if i > 0 && (i%1000000) == 0 {
-			fmt.Println("Test paused ...\a\n")
-			time.Sleep(30 * time.Second)
-		}*/
 	}
 	wg.Wait()
 }

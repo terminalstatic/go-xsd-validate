@@ -7,9 +7,8 @@ package xsdvalidate
 #include <errno.h>
 #include <malloc.h>
 #include <stdbool.h>
-#include <sys/types.h>
-#include <sys/syscall.h>
 #define GO_ERR_INIT 256
+#define P_ERR_DEFAULT 1
 #define P_ERR_EXT 2
 #define LIBXML_STATIC
 
@@ -21,11 +20,20 @@ struct xsdParserResult {
 struct xmlParserResult {
 	xmlDocPtr docPtr;
 	char *errorStr;
-} xmlParserResult;
+};
 
 struct errCtx {
 	char *errBuf;
 };
+
+struct simpleXmlError {
+	int	code;
+	char*	message;
+	int 	level;
+	int	line;
+	char*	node;
+};
+
 
 static void noOutputCallback(void *ctx, const char *message, ...) {
 }
@@ -69,9 +77,9 @@ void structErrorCallback(void *ctx, xmlErrorPtr p) {
 	char *newLine = malloc(GO_ERR_INIT);
 
 
-	pid_t pid = syscall(__NR_gettid);
+	//pid_t pid = syscall(__NR_gettid);
 
-	printf("STRUCTURED: threadId: %li, node: %s, line: %d, message: %s", pid, ((xmlNodePtr) p->node)->name, p->line, p->message);
+	//printf("threadId: %li, code: %d, level: %d, node: %s, line: %d, message: %s", pid, p->code, p->level, ((xmlNodePtr) p->node)->name, p->line, p->message);
 	int oldLen = strlen(ectx->errBuf) + 1;
 	int lineLen = 1 + snprintf(newLine, GO_ERR_INIT, "%s", p->message);
 
@@ -81,12 +89,38 @@ void structErrorCallback(void *ctx, xmlErrorPtr p) {
 		snprintf(newLine, lineLen, "%s", p->message);
 	}
 
+
 	char *tmp = malloc(oldLen + lineLen);
 	memcpy(tmp, ectx->errBuf, oldLen);
 	strcat(tmp, newLine);
 	free(newLine);
 	free(ectx->errBuf);
 	ectx->errBuf = tmp;
+}
+
+
+void simpleStructErrorCallback(void *ctx, xmlErrorPtr p) {
+	struct simpleXmlError *sErr = ctx;
+	sErr->code = p->code;
+	sErr->level = p->level;
+	sErr->line = p->line;
+
+        int cpyLen = 1 + snprintf(sErr->message, GO_ERR_INIT, "%s", p->message);
+	if (cpyLen > GO_ERR_INIT) {
+		free(sErr->message);
+		sErr->message = malloc(cpyLen);
+		snprintf(sErr->message, cpyLen, "%s", p->message);
+	}
+
+	if (p->node !=NULL) {
+		cpyLen = 1 + snprintf(sErr->node, GO_ERR_INIT, "%s", (((xmlNodePtr) p->node)->name));
+		if (cpyLen > GO_ERR_INIT) {
+			free(sErr->node);
+			sErr->node= malloc(cpyLen);
+			snprintf(sErr->node, cpyLen, "%s", (((xmlNodePtr) p->node)->name));
+		}
+	}
+
 }
 
 static struct xsdParserResult cParseUrlSchema(const char *url, const short int options) {
@@ -204,22 +238,25 @@ static struct xmlParserResult cParseDoc(const char *goXmlSource, const int goXml
 	return parserResult;
 }
 
-static char *cValidate(const xmlDocPtr doc, const xmlSchemaPtr schema) {
+static struct simpleXmlError *cValidate(const xmlDocPtr doc, const xmlSchemaPtr schema) {
 	bool err = false;
-	char *errBuf=NULL;
-	struct errCtx *ectx=malloc(sizeof(struct errCtx));
-	ectx->errBuf=calloc(GO_ERR_INIT, sizeof(char));
 	int schemaErr=0;
+
+	struct simpleXmlError *simpleError = malloc(sizeof(struct simpleXmlError));
+	simpleError->message = calloc(GO_ERR_INIT, sizeof(char));
+	simpleError->node = calloc(GO_ERR_INIT, sizeof(char));
+
+	//xmlErrorPtr errPtr= malloc(sizeof(xmlError));
 
 	xmlLineNumbersDefault(1);
 
 	if (schema == NULL) {
 		err = true;
-		strcpy(ectx->errBuf, "Xsd schema null pointer");
+		strcpy(simpleError->message, "Xsd schema null pointer");
 	}
 	else if (doc == NULL) {
 		err = true;
-		strcpy(ectx->errBuf, "Xml schema null pointer");
+		strcpy(simpleError->message, "Xml schema null pointer");
 	}
 	else
 	{
@@ -228,14 +265,13 @@ static char *cValidate(const xmlDocPtr doc, const xmlSchemaPtr schema) {
 
 		if (schemaCtxt == NULL) {
 			err = true;
-			strcpy(ectx->errBuf, "Xml validation internal error");
+			strcpy(simpleError->message, "Xml validation internal error");
 		}
 		else
 		{
-			xmlSchemaSetValidStructuredErrors(schemaCtxt, structErrorCallback, ectx);
-			//xmlSchemaSetValidErrors(schemaCtxt, genErrorCallback, noOutputCallback, ectx);
-			schemaErr = xmlSchemaValidateDoc(schemaCtxt, doc);
 
+			xmlSchemaSetValidStructuredErrors(schemaCtxt, simpleStructErrorCallback, simpleError);
+			schemaErr = xmlSchemaValidateDoc(schemaCtxt, doc);
 			xmlSchemaFreeValidCtxt(schemaCtxt);
 
 			if (schemaErr > 0)
@@ -245,22 +281,18 @@ static char *cValidate(const xmlDocPtr doc, const xmlSchemaPtr schema) {
 			else if (schemaErr < 0)
 			{
 				err = true;
-				strcpy(ectx->errBuf, "Xml validation internal error");
+				strcpy(simpleError->message, "Xml validation internal error");
 			}
 		}
 	}
 
-	errBuf=malloc(strlen(ectx->errBuf)+1);
-	memcpy(errBuf,  ectx->errBuf, strlen(ectx->errBuf)+1);
-	free(ectx->errBuf);
-	free(ectx);
 	errno = err ? -1 : 0;
-	return errBuf;
+	return simpleError;
 }
+
 */
 import "C"
 import (
-	"errors"
 	"log"
 	"runtime"
 	"strings"
@@ -276,6 +308,46 @@ type XsdHandler struct {
 // Handles xml parsing, wraps a pointer to libxml2's xmlDocPtr.
 type XmlHandler struct {
 	docPtr C.xmlDocPtr
+}
+
+type ParserError struct {
+	Message string
+}
+
+func (pe ParserError) String() string {
+	return pe.Message
+}
+
+func (pe ParserError) Error() string {
+	return pe.String()
+}
+
+type XmlParserError struct {
+	ParserError
+}
+
+type XsdParserError struct {
+	ParserError
+}
+
+// The validation error, to access the fields use type assertion
+type ValidationError struct {
+	Code          int
+	Message       string
+	Level         int
+	Line          int
+	NodeName      string
+	errStringFunc func(ValidationError) string
+}
+
+// Implementation of Stringer interface
+func (ve ValidationError) String() string {
+	return ve.errStringFunc(ve)
+}
+
+// Implementation of Error interface
+func (ve ValidationError) Error() string {
+	return ve.String()
 }
 
 // Initializes the libxml2 parser, suggested for multithreading
@@ -298,7 +370,7 @@ func parseXmlMem(inXml []byte, options Options) (C.xmlDocPtr, error) {
 	defer C.free(unsafe.Pointer(pRes.errorStr))
 	if err != nil {
 		rStr := C.GoString(pRes.errorStr)
-		return nil, errors.New("Xml parser error:\n" + strings.Trim(rStr, "\n"))
+		return nil, XmlParserError{ParserError{strings.Trim(rStr, "\n")}}
 	}
 	return pRes.docPtr, nil
 }
@@ -312,37 +384,48 @@ func parseUrlSchema(url string, options Options) (C.xmlSchemaPtr, error) {
 	defer C.free(unsafe.Pointer(pRes.errorStr))
 	if err != nil {
 		rStr := C.GoString(pRes.errorStr)
-		return nil, errors.New("Xsd parser error:\n" + strings.Trim(rStr, "\n"))
+		return nil, XsdParserError{ParserError{strings.Trim(rStr, "\n")}}
 	}
 	return pRes.schemaPtr, nil
 }
 
 // Helper function for validating given an xml document
-func validateWithXsd(xmlHandler *XmlHandler, xsdHandler *XsdHandler) error {
-	//defer C.malloc_trim(0)
-	sPtr, err := C.cValidate(xmlHandler.docPtr, xsdHandler.schemaPtr)
-	defer C.free(unsafe.Pointer(sPtr))
+func validateWithXsd(xmlHandler *XmlHandler, xsdHandler *XsdHandler, errStringFunc func(ValidationError) string) error {
+	sErr, err := C.cValidate(xmlHandler.docPtr, xsdHandler.schemaPtr)
+	defer freeSimpleXmlError(sErr)
 	if err != nil {
-		rStr := C.GoString(sPtr)
-		return errors.New("Validation error:\n" + strings.Trim(rStr, "\n"))
+		return ValidationError{Code: int(sErr.code),
+			Message:       strings.Trim(C.GoString(sErr.message), "\n"),
+			Level:         int(sErr.level),
+			Line:          int(sErr.line),
+			NodeName:      C.GoString(sErr.node),
+			errStringFunc: errStringFunc}
 	}
 	return nil
 }
 
-//Wrapper for the xmlSchemaFree function
+// Wrapper for the xmlSchemaFree function
 func freeSchemaPtr(xsdHandler *XsdHandler) {
 	if xsdHandler.schemaPtr != nil {
 		C.xmlSchemaFree(xsdHandler.schemaPtr)
 	}
 }
 
-//Wrapper for the xmlFreeDoc function
+// Wrapper for the xmlFreeDoc function
 func freeDocPtr(xmlHandler *XmlHandler) {
 	if xmlHandler.docPtr != nil {
 		C.xmlFreeDoc(xmlHandler.docPtr)
 	}
 }
 
+// Free C struct
+func freeSimpleXmlError(sxe *C.struct_simpleXmlError) {
+	C.free(unsafe.Pointer(sxe.message))
+	C.free(unsafe.Pointer(sxe.node))
+	C.free(unsafe.Pointer(sxe))
+}
+
+// Ticker for gc and malloc_trim
 func gcTicker(d time.Duration, quit chan struct{}) {
 	ticker := time.NewTicker(d)
 	for {
