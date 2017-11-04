@@ -6,7 +6,6 @@
 * [Overview](#pkg-overview)
 * [Index](#pkg-index)
 * [Examples](#pkg-examples)
-* [Subdirectories](#pkg-subdirectories)
 
 ## <a name="pkg-overview">Overview</a>
 A go package for xsd validation, uses libxml2.
@@ -83,7 +82,7 @@ Code:
 	}
 
 #### <a name="pkg-files">Package files</a>
-[errors.go](errors.go) [libxml2.go](libxml2.go) [validate_xsd.go](validate_xsd.go) 
+[errors.go](errors.go) [libxml2.go](libxml2.go) [./validate_xsd.go](validate_xsd.go) 
 
 
 
