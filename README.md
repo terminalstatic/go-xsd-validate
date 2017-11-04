@@ -82,13 +82,13 @@ Code:
 	}
 
 #### <a name="pkg-files">Package files</a>
-[errors.go](errors.go) [libxml2.go](libxml2.go) [./validate_xsd.go](validate_xsd.go) 
+[errors.go](./errors.go) [libxml2.go](./libxml2.go) [validate_xsd.go](./validate_xsd.go) 
 
 
 
 
 
-## <a name="Cleanup">func</a> [Cleanup](validate_xsd.go?s=2337:2351#L81)
+## <a name="Cleanup">func</a> [Cleanup](./validate_xsd.go?s=2337:2351#L81)
 ``` go
 func Cleanup()
 ```
@@ -96,7 +96,7 @@ Cleans up the libxml2 parser, use this when application ends or libxml2 is not n
 
 
 
-## <a name="Init">func</a> [Init](validate_xsd.go?s=1755:1772#L60)
+## <a name="Init">func</a> [Init](./validate_xsd.go?s=1755:1772#L60)
 ``` go
 func Init() error
 ```
@@ -104,7 +104,7 @@ Initializes libxml2, suggested for multithreading, see <a href="http://xmlsoft.o
 
 
 
-## <a name="InitWithGc">func</a> [InitWithGc](validate_xsd.go?s=2143:2175#L74)
+## <a name="InitWithGc">func</a> [InitWithGc](./validate_xsd.go?s=2143:2175#L74)
 ``` go
 func InitWithGc(d time.Duration)
 ```
@@ -114,7 +114,7 @@ Not required but can help to keep the memory footprint at bay when doing tons of
 
 
 
-## <a name="CommonError">type</a> [CommonError](errors.go?s=83:126#L4)
+## <a name="CommonError">type</a> [CommonError](./errors.go?s=83:126#L4)
 ``` go
 type CommonError struct {
     Message string
@@ -131,7 +131,7 @@ Common error for default String and Error implementations.
 
 
 
-### <a name="CommonError.Error">func</a> (CommonError) [Error](errors.go?s=265:300#L14)
+### <a name="CommonError.Error">func</a> (CommonError) [Error](./errors.go?s=265:300#L14)
 ``` go
 func (e CommonError) Error() string
 ```
@@ -140,7 +140,7 @@ Implementation of Error Interface
 
 
 
-### <a name="CommonError.String">func</a> (CommonError) [String](errors.go?s=168:204#L9)
+### <a name="CommonError.String">func</a> (CommonError) [String](./errors.go?s=168:204#L9)
 ``` go
 func (e CommonError) String() string
 ```
@@ -149,7 +149,7 @@ Implementation of Stringer Interface
 
 
 
-## <a name="Libxml2Error">type</a> [Libxml2Error](errors.go?s=375:416#L19)
+## <a name="Libxml2Error">type</a> [Libxml2Error](./errors.go?s=375:416#L19)
 ``` go
 type Libxml2Error struct {
     CommonError
@@ -166,7 +166,7 @@ Returned when initialization problems occured.
 
 
 
-## <a name="Options">type</a> [Options](validate_xsd.go?s=1239:1257#L44)
+## <a name="Options">type</a> [Options](./validate_xsd.go?s=1239:1257#L44)
 ``` go
 type Options int16
 ```
@@ -198,7 +198,7 @@ Validation options for possible future enhancements.
 
 
 
-## <a name="ValidationError">type</a> [ValidationError](errors.go?s=689:796#L34)
+## <a name="ValidationError">type</a> [ValidationError](./errors.go?s=689:796#L34)
 ``` go
 type ValidationError struct {
     Code     int
@@ -219,7 +219,7 @@ Returned when validation caused a problem, to access the fields use type asserti
 
 
 
-### <a name="ValidationError.Error">func</a> (ValidationError) [Error](errors.go?s=943:983#L48)
+### <a name="ValidationError.Error">func</a> (ValidationError) [Error](./errors.go?s=943:983#L48)
 ``` go
 func (ve ValidationError) Error() string
 ```
@@ -228,7 +228,7 @@ Implementation of Error interface.
 
 
 
-### <a name="ValidationError.String">func</a> (ValidationError) [String](errors.go?s=839:880#L43)
+### <a name="ValidationError.String">func</a> (ValidationError) [String](./errors.go?s=839:880#L43)
 ``` go
 func (ve ValidationError) String() string
 ```
@@ -237,7 +237,7 @@ Implementation of Stringer interface.
 
 
 
-## <a name="XmlHandler">type</a> [XmlHandler](libxml2.go?s=7218:7264#L309)
+## <a name="XmlHandler">type</a> [XmlHandler](./libxml2.go?s=7218:7264#L309)
 ``` go
 type XmlHandler struct {
     // contains filtered or unexported fields
@@ -251,7 +251,7 @@ Handles xml parsing, wraps a pointer to libxml2's xmlDocPtr.
 
 
 
-### <a name="NewXmlHandlerMem">func</a> [NewXmlHandlerMem](validate_xsd.go?s=2679:2752#L95)
+### <a name="NewXmlHandlerMem">func</a> [NewXmlHandlerMem](./validate_xsd.go?s=2679:2752#L95)
 ``` go
 func NewXmlHandlerMem(inXml []byte, options Options) (*XmlHandler, error)
 ```
@@ -263,7 +263,7 @@ The go garbage collector will not collect the allocated resources.
 
 
 
-### <a name="XmlHandler.Free">func</a> (\*XmlHandler) [Free](validate_xsd.go?s=4262:4298#L139)
+### <a name="XmlHandler.Free">func</a> (\*XmlHandler) [Free](./validate_xsd.go?s=4262:4298#L139)
 ``` go
 func (xmlHandler *XmlHandler) Free()
 ```
@@ -272,7 +272,7 @@ Frees the xml docPtr, call this when this handler is not needed anymore.
 
 
 
-## <a name="XmlParserError">type</a> [XmlParserError](errors.go?s=465:508#L24)
+## <a name="XmlParserError">type</a> [XmlParserError](./errors.go?s=465:508#L24)
 ``` go
 type XmlParserError struct {
     CommonError
@@ -289,7 +289,7 @@ Returned when xml parsing caused a problem.
 
 
 
-## <a name="XsdHandler">type</a> [XsdHandler](libxml2.go?s=7100:7152#L304)
+## <a name="XsdHandler">type</a> [XsdHandler](./libxml2.go?s=7100:7152#L304)
 ``` go
 type XsdHandler struct {
     // contains filtered or unexported fields
@@ -303,7 +303,7 @@ Handles schema parsing and validation, wraps a pointer to libxml2's xmlSchemaPtr
 
 
 
-### <a name="NewXsdHandlerUrl">func</a> [NewXsdHandlerUrl](validate_xsd.go?s=3119:3190#L107)
+### <a name="NewXsdHandlerUrl">func</a> [NewXsdHandlerUrl](./validate_xsd.go?s=3119:3190#L107)
 ``` go
 func NewXsdHandlerUrl(url string, options Options) (*XsdHandler, error)
 ```
@@ -315,7 +315,7 @@ The go garbage collector will not collect the allocated resources.
 
 
 
-### <a name="XsdHandler.Free">func</a> (\*XsdHandler) [Free](validate_xsd.go?s=4117:4153#L134)
+### <a name="XsdHandler.Free">func</a> (\*XsdHandler) [Free](./validate_xsd.go?s=4117:4153#L134)
 ``` go
 func (xsdHandler *XsdHandler) Free()
 ```
@@ -324,7 +324,7 @@ Frees the schemaPtr, call this when this handler is not needed anymore.
 
 
 
-### <a name="XsdHandler.Validate">func</a> (\*XsdHandler) [Validate](validate_xsd.go?s=3543:3628#L117)
+### <a name="XsdHandler.Validate">func</a> (\*XsdHandler) [Validate](./validate_xsd.go?s=3543:3628#L117)
 ``` go
 func (xsdHandler *XsdHandler) Validate(xmlHandler *XmlHandler, options Options) error
 ```
@@ -334,7 +334,7 @@ Both xmlHandler and xsdHandler have to be created first.
 
 
 
-## <a name="XsdParserError">type</a> [XsdParserError](errors.go?s=557:600#L29)
+## <a name="XsdParserError">type</a> [XsdParserError](./errors.go?s=557:600#L29)
 ``` go
 type XsdParserError struct {
     CommonError
