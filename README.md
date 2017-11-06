@@ -208,7 +208,7 @@ Returned when validation caused a problem, to access the fields use type asserti
 
 ### <a name="ValidationError.Error">func</a> (ValidationError) [Error](./errors.go?s=941:981#L48)
 ``` go
-func (ve ValidationError) Error() string
+func (e ValidationError) Error() string
 ```
 Implementation of Error interface.
 
@@ -217,7 +217,7 @@ Implementation of Error interface.
 
 ### <a name="ValidationError.String">func</a> (ValidationError) [String](./errors.go?s=837:878#L43)
 ``` go
-func (ve ValidationError) String() string
+func (e ValidationError) String() string
 ```
 Implementation of Stringer interface.
 

@@ -40,11 +40,11 @@ type ValidationError struct {
 }
 
 // Implementation of Stringer interface.
-func (ve ValidationError) String() string {
-	return ve.Message
+func (e ValidationError) String() string {
+	return e.Message
 }
 
 // Implementation of Error interface.
-func (ve ValidationError) Error() string {
-	return ve.String()
+func (e ValidationError) Error() string {
+	return e.String()
 }
