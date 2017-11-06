@@ -61,7 +61,7 @@ func Init() error {
 	g.Lock()
 	defer g.Unlock()
 	if g.isInitialized() {
-		return Libxml2Error{CommonError{"Libxml2 already initialized"}}
+		return Libxml2Error{errorMessage{"Libxml2 already initialized"}}
 	}
 
 	libXml2Init()
@@ -94,7 +94,7 @@ func Cleanup() {
 // The go garbage collector will not collect the allocated resources.
 func NewXmlHandlerMem(inXml []byte, options Options) (*XmlHandler, error) {
 	if !g.isInitialized() {
-		return nil, Libxml2Error{CommonError{"Libxml2 not initialized"}}
+		return nil, Libxml2Error{errorMessage{"Libxml2 not initialized"}}
 	}
 
 	xPtr, err := parseXmlMem(inXml, options)
@@ -106,7 +106,7 @@ func NewXmlHandlerMem(inXml []byte, options Options) (*XmlHandler, error) {
 // The go garbage collector will not collect the allocated resources.
 func NewXsdHandlerUrl(url string, options Options) (*XsdHandler, error) {
 	if !g.isInitialized() {
-		return nil, Libxml2Error{CommonError{"Libxml2 not initialized"}}
+		return nil, Libxml2Error{errorMessage{"Libxml2 not initialized"}}
 	}
 	sPtr, err := parseUrlSchema(url, options)
 	return &XsdHandler{sPtr}, err
@@ -116,15 +116,15 @@ func NewXsdHandlerUrl(url string, options Options) (*XsdHandler, error) {
 // Both xmlHandler and xsdHandler have to be created first.
 func (xsdHandler *XsdHandler) Validate(xmlHandler *XmlHandler, options Options) error {
 	if !g.isInitialized() {
-		return Libxml2Error{CommonError{"Libxml2 not initialized"}}
+		return Libxml2Error{errorMessage{"Libxml2 not initialized"}}
 	}
 
 	if xsdHandler == nil || xsdHandler.schemaPtr == nil {
-		return XsdParserError{CommonError{"Xsd handler not properly initialized"}}
+		return XsdParserError{errorMessage{"Xsd handler not properly initialized"}}
 
 	}
 	if xmlHandler == nil || xmlHandler.docPtr == nil {
-		return XmlParserError{CommonError{"Xml handler not properly initialized"}}
+		return XmlParserError{errorMessage{"Xml handler not properly initialized"}}
 	}
 	return validateWithXsd(xmlHandler, xsdHandler)
 

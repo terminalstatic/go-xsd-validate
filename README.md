@@ -29,10 +29,9 @@ libxml2-dev is needed, below an example how to install the latest sources (Ubunt
 * [func Cleanup()](#Cleanup)
 * [func Init() error](#Init)
 * [func InitWithGc(d time.Duration)](#InitWithGc)
-* [type CommonError](#CommonError)
-  * [func (e CommonError) Error() string](#CommonError.Error)
-  * [func (e CommonError) String() string](#CommonError.String)
 * [type Libxml2Error](#Libxml2Error)
+  * [func (e Libxml2Error) Error() string](#Libxml2Error.Error)
+  * [func (e Libxml2Error) String() string](#Libxml2Error.String)
 * [type Options](#Options)
 * [type ValidationError](#ValidationError)
   * [func (ve ValidationError) Error() string](#ValidationError.Error)
@@ -41,14 +40,18 @@ libxml2-dev is needed, below an example how to install the latest sources (Ubunt
   * [func NewXmlHandlerMem(inXml []byte, options Options) (*XmlHandler, error)](#NewXmlHandlerMem)
   * [func (xmlHandler *XmlHandler) Free()](#XmlHandler.Free)
 * [type XmlParserError](#XmlParserError)
+  * [func (e XmlParserError) Error() string](#XmlParserError.Error)
+  * [func (e XmlParserError) String() string](#XmlParserError.String)
 * [type XsdHandler](#XsdHandler)
   * [func NewXsdHandlerUrl(url string, options Options) (*XsdHandler, error)](#NewXsdHandlerUrl)
   * [func (xsdHandler *XsdHandler) Free()](#XsdHandler.Free)
   * [func (xsdHandler *XsdHandler) Validate(xmlHandler *XmlHandler, options Options) error](#XsdHandler.Validate)
 * [type XsdParserError](#XsdParserError)
+  * [func (e XsdParserError) Error() string](#XsdParserError.Error)
+  * [func (e XsdParserError) String() string](#XsdParserError.String)
 
 #### <a name="pkg-examples">Examples</a>
-An example on how to use the package. In some situations, e.g. programatically looping over xml documents you might have to explicitly free the handler without defer. Calling xsdvalidate.Init() is only required once before you start parsing and validating, and xsdvalidate.Cleanup() respectively when finished.
+An example on how to use the package. Init() is only required once before parsing and validating, and Cleanup() respectively when finished.
 
 Code:
 
@@ -56,31 +59,32 @@ Code:
 	defer xsdvalidate.Cleanup()
 	xsdhandler, err := xsdvalidate.NewXsdHandlerUrl("examples/test1_split.xsd", xsdvalidate.ParsErrDefault)
 	if err != nil {
-    		panic(err)
+	    panic(err)
 	}
 	defer xsdhandler.Free()
-
+	
 	xmlFile, err := os.Open("examples/test1_fail2.xml")
 	if err != nil {
-    		panic(err)
+	    panic(err)
 	}
 	defer xmlFile.Close()
 	inXml, err := ioutil.ReadAll(xmlFile)
 	if err != nil {
-    		panic(err)
+	    panic(err)
 	}
 	
 	xmlhandler, err := xsdvalidate.NewXmlHandlerMem(inXml, xsdvalidate.ParsErrDefault)
 	if err != nil {
-    		panic(err)
+	    panic(err)
 	}
 	defer xmlhandler.Free()
-
+	
 	err = xsdhandler.Validate(xmlhandler, xsdvalidate.ValidErrDefault)
 	if err != nil {
-    		fmt.Printf("Error in line: %d\n", err.(xsdvalidate.ValidationError).Line)
-    		fmt.Println(err)
+	    fmt.Printf("Error in line: %d\n", err.(xsdvalidate.ValidationError).Line)
+	    fmt.Println(err)
 	}
+
 
 #### <a name="pkg-files">Package files</a>
 [errors.go](./errors.go) [libxml2.go](./libxml2.go) [validate_xsd.go](./validate_xsd.go) 
@@ -89,7 +93,7 @@ Code:
 
 
 
-## <a name="Cleanup">func</a> [Cleanup](./validate_xsd.go?s=2277:2291#L81)
+## <a name="Cleanup">func</a> [Cleanup](./validate_xsd.go?s=2278:2292#L81)
 ``` go
 func Cleanup()
 ```
@@ -105,7 +109,7 @@ Initializes libxml2, see <a href="http://xmlsoft.org/threads.html">http://xmlsof
 
 
 
-## <a name="InitWithGc">func</a> [InitWithGc](./validate_xsd.go?s=2113:2145#L74)
+## <a name="InitWithGc">func</a> [InitWithGc](./validate_xsd.go?s=2114:2146#L74)
 ``` go
 func InitWithGc(d time.Duration)
 ```
@@ -115,45 +119,10 @@ Not required but can help to keep the memory footprint at bay when doing tons of
 
 
 
-## <a name="CommonError">type</a> [CommonError](./errors.go?s=83:126#L4)
-``` go
-type CommonError struct {
-    Message string
-}
-```
-Common error for default String and Error implementations.
-
-
-
-
-
-
-
-
-
-
-### <a name="CommonError.Error">func</a> (CommonError) [Error](./errors.go?s=265:300#L14)
-``` go
-func (e CommonError) Error() string
-```
-Implementation of Error Interface
-
-
-
-
-### <a name="CommonError.String">func</a> (CommonError) [String](./errors.go?s=168:204#L9)
-``` go
-func (e CommonError) String() string
-```
-Implementation of Stringer Interface
-
-
-
-
-## <a name="Libxml2Error">type</a> [Libxml2Error](./errors.go?s=375:416#L19)
+## <a name="Libxml2Error">type</a> [Libxml2Error](./errors.go?s=370:412#L19)
 ``` go
 type Libxml2Error struct {
-    CommonError
+    // contains filtered or unexported fields
 }
 ```
 Returned when initialization problems occured.
@@ -163,6 +132,24 @@ Returned when initialization problems occured.
 
 
 
+
+
+
+
+### <a name="Libxml2Error.Error">func</a> (Libxml2Error) [Error](./errors.go?s=259:295#L14)
+``` go
+func (e Libxml2Error) Error() string
+```
+Implementation of the Error Interface.
+
+
+
+
+### <a name="Libxml2Error.String">func</a> (Libxml2Error) [String](./errors.go?s=156:193#L9)
+``` go
+func (e Libxml2Error) String() string
+```
+Implementation of the Stringer Interface.
 
 
 
@@ -199,7 +186,7 @@ Validation options for possible future enhancements.
 
 
 
-## <a name="ValidationError">type</a> [ValidationError](./errors.go?s=689:796#L34)
+## <a name="ValidationError">type</a> [ValidationError](./errors.go?s=687:794#L34)
 ``` go
 type ValidationError struct {
     Code     int
@@ -220,7 +207,7 @@ Returned when validation caused a problem, to access the fields use type asserti
 
 
 
-### <a name="ValidationError.Error">func</a> (ValidationError) [Error](./errors.go?s=943:983#L48)
+### <a name="ValidationError.Error">func</a> (ValidationError) [Error](./errors.go?s=941:981#L48)
 ``` go
 func (ve ValidationError) Error() string
 ```
@@ -229,7 +216,7 @@ Implementation of Error interface.
 
 
 
-### <a name="ValidationError.String">func</a> (ValidationError) [String](./errors.go?s=839:880#L43)
+### <a name="ValidationError.String">func</a> (ValidationError) [String](./errors.go?s=837:878#L43)
 ``` go
 func (ve ValidationError) String() string
 ```
@@ -252,7 +239,7 @@ Handles xml parsing, wraps a pointer to libxml2's xmlDocPtr.
 
 
 
-### <a name="NewXmlHandlerMem">func</a> [NewXmlHandlerMem](./validate_xsd.go?s=2619:2692#L95)
+### <a name="NewXmlHandlerMem">func</a> [NewXmlHandlerMem](./validate_xsd.go?s=2620:2693#L95)
 ``` go
 func NewXmlHandlerMem(inXml []byte, options Options) (*XmlHandler, error)
 ```
@@ -264,7 +251,7 @@ The go garbage collector will not collect the allocated resources.
 
 
 
-### <a name="XmlHandler.Free">func</a> (\*XmlHandler) [Free](./validate_xsd.go?s=4185:4221#L139)
+### <a name="XmlHandler.Free">func</a> (\*XmlHandler) [Free](./validate_xsd.go?s=4191:4227#L139)
 ``` go
 func (xmlHandler *XmlHandler) Free()
 ```
@@ -273,10 +260,10 @@ Frees the xml docPtr, call this when this handler is not needed anymore.
 
 
 
-## <a name="XmlParserError">type</a> [XmlParserError](./errors.go?s=465:508#L24)
+## <a name="XmlParserError">type</a> [XmlParserError](./errors.go?s=461:505#L24)
 ``` go
 type XmlParserError struct {
-    CommonError
+    // contains filtered or unexported fields
 }
 ```
 Returned when xml parsing caused a problem.
@@ -286,6 +273,24 @@ Returned when xml parsing caused a problem.
 
 
 
+
+
+
+
+### <a name="XmlParserError.Error">func</a> (XmlParserError) [Error](./errors.go?s=259:295#L14)
+``` go
+func (e XmlParserError) Error() string
+```
+Implementation of the Error Interface.
+
+
+
+
+### <a name="XmlParserError.String">func</a> (XmlParserError) [String](./errors.go?s=156:193#L9)
+``` go
+func (e XmlParserError) String() string
+```
+Implementation of the Stringer Interface.
 
 
 
@@ -304,7 +309,7 @@ Handles schema parsing and validation, wraps a pointer to libxml2's xmlSchemaPtr
 
 
 
-### <a name="NewXsdHandlerUrl">func</a> [NewXsdHandlerUrl](./validate_xsd.go?s=3059:3130#L107)
+### <a name="NewXsdHandlerUrl">func</a> [NewXsdHandlerUrl](./validate_xsd.go?s=3061:3132#L107)
 ``` go
 func NewXsdHandlerUrl(url string, options Options) (*XsdHandler, error)
 ```
@@ -316,7 +321,7 @@ The go garbage collector will not collect the allocated resources.
 
 
 
-### <a name="XsdHandler.Free">func</a> (\*XsdHandler) [Free](./validate_xsd.go?s=4040:4076#L134)
+### <a name="XsdHandler.Free">func</a> (\*XsdHandler) [Free](./validate_xsd.go?s=4046:4082#L134)
 ``` go
 func (xsdHandler *XsdHandler) Free()
 ```
@@ -325,7 +330,7 @@ Frees the schemaPtr, call this when this handler is not needed anymore.
 
 
 
-### <a name="XsdHandler.Validate">func</a> (\*XsdHandler) [Validate](./validate_xsd.go?s=3466:3551#L117)
+### <a name="XsdHandler.Validate">func</a> (\*XsdHandler) [Validate](./validate_xsd.go?s=3469:3554#L117)
 ``` go
 func (xsdHandler *XsdHandler) Validate(xmlHandler *XmlHandler, options Options) error
 ```
@@ -335,10 +340,10 @@ Both xmlHandler and xsdHandler have to be created first.
 
 
 
-## <a name="XsdParserError">type</a> [XsdParserError](./errors.go?s=557:600#L29)
+## <a name="XsdParserError">type</a> [XsdParserError](./errors.go?s=554:598#L29)
 ``` go
 type XsdParserError struct {
-    CommonError
+    // contains filtered or unexported fields
 }
 ```
 Returned when xsd parsing caused a problem.
@@ -348,6 +353,24 @@ Returned when xsd parsing caused a problem.
 
 
 
+
+
+
+
+### <a name="XsdParserError.Error">func</a> (XsdParserError) [Error](./errors.go?s=259:295#L14)
+``` go
+func (e XsdParserError) Error() string
+```
+Implementation of the Error Interface.
+
+
+
+
+### <a name="XsdParserError.String">func</a> (XsdParserError) [String](./errors.go?s=156:193#L9)
+``` go
+func (e XsdParserError) String() string
+```
+Implementation of the Stringer Interface.
 
 
 

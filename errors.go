@@ -1,33 +1,33 @@
 package xsdvalidate
 
-// Common error for default String and Error implementations.
-type CommonError struct {
+// Common String and Error implementations.
+type errorMessage struct {
 	Message string
 }
 
-// Implementation of Stringer Interface
-func (e CommonError) String() string {
+// Implementation of the Stringer Interface.
+func (e errorMessage) String() string {
 	return e.Message
 }
 
-// Implementation of Error Interface
-func (e CommonError) Error() string {
+// Implementation of the Error Interface.
+func (e errorMessage) Error() string {
 	return e.String()
 }
 
 // Returned when initialization problems occured.
 type Libxml2Error struct {
-	CommonError
+	errorMessage
 }
 
 // Returned when xml parsing caused a problem.
 type XmlParserError struct {
-	CommonError
+	errorMessage
 }
 
 // Returned when xsd parsing caused a problem.
 type XsdParserError struct {
-	CommonError
+	errorMessage
 }
 
 // Returned when validation caused a problem, to access the fields use type assertion.

@@ -330,7 +330,7 @@ func parseXmlMem(inXml []byte, options Options) (C.xmlDocPtr, error) {
 	defer C.free(unsafe.Pointer(pRes.errorStr))
 	if err != nil {
 		rStr := C.GoString(pRes.errorStr)
-		return nil, XmlParserError{CommonError{strings.Trim(rStr, "\n")}}
+		return nil, XmlParserError{errorMessage{strings.Trim(rStr, "\n")}}
 	}
 	return pRes.docPtr, nil
 }
@@ -344,7 +344,7 @@ func parseUrlSchema(url string, options Options) (C.xmlSchemaPtr, error) {
 	defer C.free(unsafe.Pointer(pRes.errorStr))
 	if err != nil {
 		rStr := C.GoString(pRes.errorStr)
-		return nil, XsdParserError{CommonError{strings.Trim(rStr, "\n")}}
+		return nil, XsdParserError{errorMessage{strings.Trim(rStr, "\n")}}
 	}
 	return pRes.schemaPtr, nil
 }
@@ -354,7 +354,8 @@ func validateWithXsd(xmlHandler *XmlHandler, xsdHandler *XsdHandler) error {
 	sErr, err := C.cValidate(xmlHandler.docPtr, xsdHandler.schemaPtr)
 	defer freeSimpleXmlError(sErr)
 	if err != nil {
-		return ValidationError{Code: int(sErr.code),
+		return ValidationError{
+			Code:     int(sErr.code),
 			Message:  strings.Trim(C.GoString(sErr.message), "\n"),
 			Level:    int(sErr.level),
 			Line:     int(sErr.line),
