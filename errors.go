@@ -39,12 +39,12 @@ type ValidationError struct {
 	NodeName string
 }
 
-// Implementation of Stringer interface.
+// Implementation of the Stringer interface.
 func (e ValidationError) String() string {
 	return e.Message
 }
 
-// Implementation of Error interface.
+// Implementation of the Error interface.
 func (e ValidationError) Error() string {
 	return e.String()
 }
