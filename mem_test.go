@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-const iterations = 5000000
+const iterations = 1000000
 const maxGoroutines = 100
 
 func TestMemParseXsd(t *testing.T) {

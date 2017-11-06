@@ -293,7 +293,6 @@ static struct simpleXmlError *cValidate(const xmlDocPtr doc, const xmlSchemaPtr 
 */
 import "C"
 import (
-	"log"
 	"runtime"
 	"strings"
 	"time"
@@ -392,11 +391,9 @@ func gcTicker(d time.Duration, quit chan struct{}) {
 	for {
 		select {
 		case <-ticker.C:
-			log.Println("Running GC and malloc_trim(0)")
 			runtime.GC()
 			C.malloc_trim(0)
 		case <-quit:
-			log.Println("GC ticker stopped")
 			ticker.Stop()
 			return
 		}
