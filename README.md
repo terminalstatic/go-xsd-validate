@@ -6,6 +6,7 @@
 * [Overview](#pkg-overview)
 * [Index](#pkg-index)
 * [Examples](#pkg-examples)
+* [Subdirectories](#pkg-subdirectories)
 
 ## <a name="pkg-overview">Overview</a>
 A go package for xsd validation, uses libxml2.
@@ -88,23 +89,23 @@ Code:
 
 
 
-## <a name="Cleanup">func</a> [Cleanup](./validate_xsd.go?s=2337:2351#L81)
+## <a name="Cleanup">func</a> [Cleanup](./validate_xsd.go?s=2277:2291#L81)
 ``` go
 func Cleanup()
 ```
-Cleans up the libxml2 parser, use this when application ends or libxml2 is not needed anymore.
+Cleans up libxml2 memory and finishes gc goroutine when running.
 
 
 
-## <a name="Init">func</a> [Init](./validate_xsd.go?s=1755:1772#L60)
+## <a name="Init">func</a> [Init](./validate_xsd.go?s=1725:1742#L60)
 ``` go
 func Init() error
 ```
-Initializes libxml2, suggested for multithreading, see <a href="http://xmlsoft.org/threads.html">http://xmlsoft.org/threads.html</a>.
+Initializes libxml2, see <a href="http://xmlsoft.org/threads.html">http://xmlsoft.org/threads.html</a>.
 
 
 
-## <a name="InitWithGc">func</a> [InitWithGc](./validate_xsd.go?s=2143:2175#L74)
+## <a name="InitWithGc">func</a> [InitWithGc](./validate_xsd.go?s=2113:2145#L74)
 ``` go
 func InitWithGc(d time.Duration)
 ```
@@ -251,7 +252,7 @@ Handles xml parsing, wraps a pointer to libxml2's xmlDocPtr.
 
 
 
-### <a name="NewXmlHandlerMem">func</a> [NewXmlHandlerMem](./validate_xsd.go?s=2679:2752#L95)
+### <a name="NewXmlHandlerMem">func</a> [NewXmlHandlerMem](./validate_xsd.go?s=2619:2692#L95)
 ``` go
 func NewXmlHandlerMem(inXml []byte, options Options) (*XmlHandler, error)
 ```
@@ -263,7 +264,7 @@ The go garbage collector will not collect the allocated resources.
 
 
 
-### <a name="XmlHandler.Free">func</a> (\*XmlHandler) [Free](./validate_xsd.go?s=4262:4298#L139)
+### <a name="XmlHandler.Free">func</a> (\*XmlHandler) [Free](./validate_xsd.go?s=4185:4221#L139)
 ``` go
 func (xmlHandler *XmlHandler) Free()
 ```
@@ -303,7 +304,7 @@ Handles schema parsing and validation, wraps a pointer to libxml2's xmlSchemaPtr
 
 
 
-### <a name="NewXsdHandlerUrl">func</a> [NewXsdHandlerUrl](./validate_xsd.go?s=3119:3190#L107)
+### <a name="NewXsdHandlerUrl">func</a> [NewXsdHandlerUrl](./validate_xsd.go?s=3059:3130#L107)
 ``` go
 func NewXsdHandlerUrl(url string, options Options) (*XsdHandler, error)
 ```
@@ -315,7 +316,7 @@ The go garbage collector will not collect the allocated resources.
 
 
 
-### <a name="XsdHandler.Free">func</a> (\*XsdHandler) [Free](./validate_xsd.go?s=4117:4153#L134)
+### <a name="XsdHandler.Free">func</a> (\*XsdHandler) [Free](./validate_xsd.go?s=4040:4076#L134)
 ``` go
 func (xsdHandler *XsdHandler) Free()
 ```
@@ -324,11 +325,11 @@ Frees the schemaPtr, call this when this handler is not needed anymore.
 
 
 
-### <a name="XsdHandler.Validate">func</a> (\*XsdHandler) [Validate](./validate_xsd.go?s=3543:3628#L117)
+### <a name="XsdHandler.Validate">func</a> (\*XsdHandler) [Validate](./validate_xsd.go?s=3466:3551#L117)
 ``` go
 func (xsdHandler *XsdHandler) Validate(xmlHandler *XmlHandler, options Options) error
 ```
-The validation method validates an xmlHandler against an xsdHandler and returns the libxml2 validation error text.
+This validates an xmlHandler against an xsdHandler and returns the libxml2 validation error text.
 Both xmlHandler and xsdHandler have to be created first.
 
 
