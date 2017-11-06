@@ -72,33 +72,6 @@ static void genErrorCallback(void *ctx, const char *message, ...) {
 	ectx->errBuf = tmp;
 }
 
-void structErrorCallback(void *ctx, xmlErrorPtr p) {
-	struct errCtx *ectx = ctx;
-	char *newLine = malloc(GO_ERR_INIT);
-
-
-	//pid_t pid = syscall(__NR_gettid);
-
-	//printf("threadId: %li, code: %d, level: %d, node: %s, line: %d, message: %s", pid, p->code, p->level, ((xmlNodePtr) p->node)->name, p->line, p->message);
-	int oldLen = strlen(ectx->errBuf) + 1;
-	int lineLen = 1 + snprintf(newLine, GO_ERR_INIT, "%s", p->message);
-
-	if (lineLen  > GO_ERR_INIT) {
-		free(newLine);
-		newLine = malloc(lineLen);
-		snprintf(newLine, lineLen, "%s", p->message);
-	}
-
-
-	char *tmp = malloc(oldLen + lineLen);
-	memcpy(tmp, ectx->errBuf, oldLen);
-	strcat(tmp, newLine);
-	free(newLine);
-	free(ectx->errBuf);
-	ectx->errBuf = tmp;
-}
-
-
 void simpleStructErrorCallback(void *ctx, xmlErrorPtr p) {
 	struct simpleXmlError *sErr = ctx;
 	sErr->code = p->code;
@@ -120,7 +93,6 @@ void simpleStructErrorCallback(void *ctx, xmlErrorPtr p) {
 			snprintf(sErr->node, cpyLen, "%s", (((xmlNodePtr) p->node)->name));
 		}
 	}
-
 }
 
 static struct xsdParserResult cParseUrlSchema(const char *url, const short int options) {
@@ -245,8 +217,6 @@ static struct simpleXmlError *cValidate(const xmlDocPtr doc, const xmlSchemaPtr 
 	struct simpleXmlError *simpleError = malloc(sizeof(struct simpleXmlError));
 	simpleError->message = calloc(GO_ERR_INIT, sizeof(char));
 	simpleError->node = calloc(GO_ERR_INIT, sizeof(char));
-
-	//xmlErrorPtr errPtr= malloc(sizeof(xmlError));
 
 	xmlLineNumbersDefault(1);
 
