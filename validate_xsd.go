@@ -56,7 +56,7 @@ const (
 
 var quit chan struct{}
 
-// Initializes libxml2, suggested for multithreading, see http://xmlsoft.org/threads.html.
+// Initializes libxml2, see http://xmlsoft.org/threads.html.
 func Init() error {
 	g.Lock()
 	defer g.Unlock()
@@ -77,7 +77,7 @@ func InitWithGc(d time.Duration) {
 	go gcTicker(d, quit)
 }
 
-// Cleans up the libxml2 parser, use this when application ends or libxml2 is not needed anymore.
+// Cleans up libxml2 memory and finishes gc goroutine when running.
 func Cleanup() {
 	g.Lock()
 	defer g.Unlock()
@@ -112,7 +112,7 @@ func NewXsdHandlerUrl(url string, options Options) (*XsdHandler, error) {
 	return &XsdHandler{sPtr}, err
 }
 
-// The validation method validates an xmlHandler against an xsdHandler and returns the libxml2 validation error text.
+// This validates an xmlHandler against an xsdHandler and returns the libxml2 validation error text.
 // Both xmlHandler and xsdHandler have to be created first.
 func (xsdHandler *XsdHandler) Validate(xmlHandler *XmlHandler, options Options) error {
 	if !g.isInitialized() {
