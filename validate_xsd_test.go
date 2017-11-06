@@ -25,7 +25,7 @@ func TestXsdUrlHandlerFail(t *testing.T) {
 	defer Cleanup()
 
 	handler, err := NewXsdHandlerUrl("examples/test1_fail.xsd", ParsErrVerbose)
-	fmt.Printf("Error OK: %s %s\n", t.Name(), err.Error())
+	fmt.Printf("Error OK:\n%s %s\n", t.Name(), err.Error())
 	if err == nil {
 		t.Fail()
 	}
@@ -64,11 +64,11 @@ func TestXmlMemHandlerFail(t *testing.T) {
 
 	inXml, _ := ioutil.ReadAll(xmlFilePass)
 
-	handler, err := NewXmlHandlerMem(inXml, ParsErrDefault)
+	handler, err := NewXmlHandlerMem(inXml, ParsErrVerbose)
 	if err == nil {
 		t.Fail()
 	} else {
-		fmt.Printf("Error OK: %s %s\n", t.Name(), err.Error())
+		fmt.Printf("Error OK:\n%s %s\n", t.Name(), err.Error())
 	}
 	defer handler.Free()
 }
@@ -168,7 +168,7 @@ func TestValidateWithXsdHandlerFail(t *testing.T) {
 	defer xmlhandler.Free()
 
 	err = xsdhandler.Validate(xmlhandler, ValidErrDefault)
-	fmt.Printf("Error OK: %s %s\n", t.Name(), err.Error())
+	fmt.Printf("Error OK:\n %s %s\n", t.Name(), err.Error())
 	if err == nil {
 		t.Fail()
 	}

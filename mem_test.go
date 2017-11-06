@@ -10,14 +10,15 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 )
 
-const iterations = 1000000
+const iterations = 5000000
 const maxGoroutines = 100
 
 func TestMemParseXsd(t *testing.T) {
 	fmt.Println("Now Running TestMemParseXsd")
-	Init()
+	InitWithGc(time.Duration(30) * time.Second)
 
 	defer Cleanup()
 
@@ -42,7 +43,7 @@ func TestMemParseXsd(t *testing.T) {
 }
 func TestMemParseXml(t *testing.T) {
 	fmt.Println("Now Running TestMemParseXml")
-	Init()
+	InitWithGc(time.Duration(30) * time.Second)
 
 	defer Cleanup()
 
@@ -83,7 +84,7 @@ func TestMemParseXml(t *testing.T) {
 }
 func TestMemValidate(t *testing.T) {
 	fmt.Println("Now Running TestMemValidate")
-	Init()
+	InitWithGc(time.Duration(30) * time.Second)
 
 	defer Cleanup()
 
@@ -138,7 +139,7 @@ func TestMemValidate(t *testing.T) {
 }
 func TestMemAltValidate(t *testing.T) {
 	fmt.Println("Now Running TestMemAltValidate")
-	Init()
+	InitWithGc(time.Duration(30) * time.Second)
 
 	//fmt.Println(syscall.Gettid())
 	defer Cleanup()

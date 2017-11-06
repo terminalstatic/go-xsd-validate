@@ -38,9 +38,14 @@ func Example() {
 	err = xsdhandler.Validate(xmlhandler, xsdvalidate.ValidErrDefault)
 	if err != nil {
 		fmt.Printf("Error in line: %d\n", err.(xsdvalidate.ValidationError).Line)
+		fmt.Printf(err.(xsdvalidate.ValidationError).
+			Format(func(ve xsdvalidate.ValidationError) string {
+				return fmt.Sprintf("Error in Line: %d, Severity : %d, Message: %s\n", ve.Line, ve.Level, ve.Message)
+			}))
 		fmt.Println(err)
 	}
 	// Output:
 	// Error in line: 3
+	// Error in Line: 3, Severity : 2, Message: Element 'shipto': This element is not expected. Expected is ( orderperson ).
 	// Element 'shipto': This element is not expected. Expected is ( orderperson ).
 }
