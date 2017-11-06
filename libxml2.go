@@ -34,9 +34,7 @@ struct simpleXmlError {
 	char*	node;
 };
 
-
-static void noOutputCallback(void *ctx, const char *message, ...) {
-}
+static void noOutputCallback(void *ctx, const char *message, ...) {}
 
 static void init() {
 	xmlInitParser();
@@ -96,6 +94,7 @@ void simpleStructErrorCallback(void *ctx, xmlErrorPtr p) {
 }
 
 static struct xsdParserResult cParseUrlSchema(const char *url, const short int options) {
+	xmlLineNumbersDefault(1);
 	bool err = false;
 	struct xsdParserResult parserResult;
 	char *errBuf=NULL;
@@ -106,8 +105,6 @@ static struct xsdParserResult cParseUrlSchema(const char *url, const short int o
 
 	xmlSchemaPtr schema = NULL;
 	xmlSchemaParserCtxtPtr schemaParserCtxt = NULL;
-
-	xmlLineNumbersDefault(1);
 
 	schemaParserCtxt = xmlSchemaNewParserCtxt(url);
 
@@ -157,13 +154,12 @@ static struct xsdParserResult cParseUrlSchema(const char *url, const short int o
 }
 
 static struct xmlParserResult cParseDoc(const char *goXmlSource, const int goXmlSourceLen, const short int options) {
+	xmlLineNumbersDefault(1);
 	bool err = false;
 	struct xmlParserResult parserResult;
 	char *errBuf=NULL;
 	struct errCtx *ectx=malloc(sizeof(struct errCtx));
 	ectx->errBuf=calloc(GO_ERR_INIT, sizeof(char));;
-
-	xmlLineNumbersDefault(1);
 
 	xmlDocPtr doc=NULL;
 	xmlParserCtxtPtr xmlParserCtxt=NULL;
@@ -211,14 +207,13 @@ static struct xmlParserResult cParseDoc(const char *goXmlSource, const int goXml
 }
 
 static struct simpleXmlError *cValidate(const xmlDocPtr doc, const xmlSchemaPtr schema) {
+	xmlLineNumbersDefault(1);
 	bool err = false;
 	int schemaErr=0;
 
 	struct simpleXmlError *simpleError = malloc(sizeof(struct simpleXmlError));
 	simpleError->message = calloc(GO_ERR_INIT, sizeof(char));
 	simpleError->node = calloc(GO_ERR_INIT, sizeof(char));
-
-	xmlLineNumbersDefault(1);
 
 	if (schema == NULL) {
 		err = true;
@@ -239,7 +234,6 @@ static struct simpleXmlError *cValidate(const xmlDocPtr doc, const xmlSchemaPtr 
 		}
 		else
 		{
-
 			xmlSchemaSetValidStructuredErrors(schemaCtxt, simpleStructErrorCallback, simpleError);
 			schemaErr = xmlSchemaValidateDoc(schemaCtxt, doc);
 			xmlSchemaFreeValidCtxt(schemaCtxt);
@@ -259,7 +253,6 @@ static struct simpleXmlError *cValidate(const xmlDocPtr doc, const xmlSchemaPtr 
 	errno = err ? -1 : 0;
 	return simpleError;
 }
-
 */
 import "C"
 import (
