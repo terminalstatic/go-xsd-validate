@@ -15,22 +15,22 @@ func (e errorMessage) Error() string {
 	return e.String()
 }
 
-// Returned when initialization problems occured.
+// Returned when initialization an initialization error occured.
 type Libxml2Error struct {
 	errorMessage
 }
 
-// Returned when xml parsing caused a problem.
+// Returned when xml parsing caused error(s).
 type XmlParserError struct {
 	errorMessage
 }
 
-// Returned when xsd parsing caused a problem.
+// Returned when xsd parsing caused a error(s).
 type XsdParserError struct {
 	errorMessage
 }
 
-// Returned when validation caused a problem, to access the fields use type assertion.
+// Returned when validation caused an error, to access the fields use type assertion.
 type ValidationError struct {
 	Code     int
 	Message  string

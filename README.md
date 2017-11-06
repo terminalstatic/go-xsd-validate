@@ -124,7 +124,7 @@ type Libxml2Error struct {
     // contains filtered or unexported fields
 }
 ```
-Returned when initialization problems occured.
+Returned when an initialization error occured.
 
 
 
@@ -195,7 +195,7 @@ type ValidationError struct {
     NodeName string
 }
 ```
-Returned when validation caused a problem, to access the fields use type assertion.
+Returned when validation caused an error, to access the fields use type assertion (see example).
 
 
 
@@ -265,7 +265,7 @@ type XmlParserError struct {
     // contains filtered or unexported fields
 }
 ```
-Returned when xml parsing caused a problem.
+Returned when xml parsing caused error(s).
 
 
 
@@ -345,7 +345,7 @@ type XsdParserError struct {
     // contains filtered or unexported fields
 }
 ```
-Returned when xsd parsing caused a problem.
+Returned when xsd parsing caused error(s).
 
 
 
