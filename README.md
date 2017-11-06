@@ -85,7 +85,6 @@ Code:
 	    fmt.Println(err)
 	}
 
-
 #### <a name="pkg-files">Package files</a>
 [errors.go](./errors.go) [libxml2.go](./libxml2.go) [validate_xsd.go](./validate_xsd.go) 
 
@@ -225,7 +224,7 @@ Implementation of Stringer interface.
 
 
 
-## <a name="XmlHandler">type</a> [XmlHandler](./libxml2.go?s=7218:7264#L309)
+## <a name="XmlHandler">type</a> [XmlHandler](./libxml2.go?s=7211:7257#L308)
 ``` go
 type XmlHandler struct {
     // contains filtered or unexported fields
@@ -295,7 +294,7 @@ Implementation of the Stringer Interface.
 
 
 
-## <a name="XsdHandler">type</a> [XsdHandler](./libxml2.go?s=7100:7152#L304)
+## <a name="XsdHandler">type</a> [XsdHandler](./libxml2.go?s=7093:7145#L303)
 ``` go
 type XsdHandler struct {
     // contains filtered or unexported fields
