@@ -30,7 +30,7 @@ type XsdParserError struct {
 	errorMessage
 }
 
-// Returned when validation caused an error, to access the fields use type assertion.
+// Returned when validation caused an error, to access the fields use type assertion (see example).
 type ValidationError struct {
 	Code     int
 	Message  string
