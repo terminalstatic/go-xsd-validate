@@ -70,7 +70,7 @@ static void genErrorCallback(void *ctx, const char *message, ...) {
 	ectx->errBuf = tmp;
 }
 
-void simpleStructErrorCallback(void *ctx, xmlErrorPtr p) {
+static void simpleStructErrorCallback(void *ctx, xmlErrorPtr p) {
 	struct simpleXmlError *sErr = ctx;
 	sErr->code = p->code;
 	sErr->level = p->level;
@@ -181,7 +181,6 @@ static struct xmlParserResult cParseDoc(const char *goXmlSource, const int goXml
 		doc = xmlParseMemory(goXmlSource, goXmlSourceLen);
 
 		xmlFreeParserCtxt(xmlParserCtxt);
-
 		if (doc == NULL) {
 			if (options & P_ERR_EXT) {
 				err = true;
