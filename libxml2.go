@@ -255,12 +255,12 @@ import (
 	"unsafe"
 )
 
-// Handles schema parsing and validation, wraps a pointer to libxml2's xmlSchemaPtr.
+// XsdHandler handles schema parsing and validation and wraps a pointer to libxml2's xmlSchemaPtr.
 type XsdHandler struct {
 	schemaPtr C.xmlSchemaPtr
 }
 
-// Handles xml parsing, wraps a pointer to libxml2's xmlDocPtr.
+// XmlHandler handles xml parsing and wraps a pointer to libxml2's xmlDocPtr.
 type XmlHandler struct {
 	docPtr C.xmlDocPtr
 }

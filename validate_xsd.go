@@ -1,8 +1,8 @@
-// A go package for xsd validation, uses libxml2.
+// Package xsdvalidate is a go package for xsd validation that utilizes libxml2.
 //
-// The rationale behind this package is to preload xsd files and use their in-memory structure to validate incoming xml documents in a concurrent environment, eg. the post bodys of xml service endpoints, and return useful error messages when appropriate. Existing packages either didn't provide error details or got stuck under load.
+// The goal of this package is to preload xsd files and use their in-memory representation to validate xml documents in a concurrent environment, eg. the post bodys of xml service endpoints and hand through libxml2 error messages. Existing packages either didn't provide error details or got stuck under load.
 //
-// libxml2-dev is needed, below an example how to install the latest sources (Ubuntu, change prefix according to where libs and include files are located):
+// libxml2-dev is needed, below an example how to install the latest sources as at the time of writing (Ubuntu, change prefix according to where libs and include files are located):
 //  curl -sL ftp://xmlsoft.org/libxml2/libxml2-2.9.5.tar.gz | tar -xzf -
 //  cd ./libxml2-2.9.5/
 //  ./configure --prefix=/usr  --enable-static --with-threads --with-history
@@ -40,7 +40,7 @@ func (guard *guard) setInitialized(b bool) {
 
 var g guard
 
-// The type for parser/validation options.
+// Options type for parser/validation options.
 type Options int16
 
 // The parser options, ParsErrVerbose will slow down parsing considerably!
@@ -56,7 +56,7 @@ const (
 
 var quit chan struct{}
 
-// Initializes libxml2, see http://xmlsoft.org/threads.html.
+// Init initializes libxml2, see http://xmlsoft.org/threads.html.
 func Init() error {
 	g.Lock()
 	defer g.Unlock()
@@ -69,7 +69,7 @@ func Init() error {
 	return nil
 }
 
-// Initializes lbxml2 with a goroutine which trims memory and runs the go gc every d duration.
+// InitWithGc initializes lbxml2 with a goroutine that trims memory and runs the go gc every d duration.
 // Not required but can help to keep the memory footprint at bay when doing tons of validations.
 func InitWithGc(d time.Duration) {
 	Init()
@@ -77,7 +77,7 @@ func InitWithGc(d time.Duration) {
 	go gcTicker(d, quit)
 }
 
-// Cleans up libxml2 memory and finishes gc goroutine when running.
+// Cleanup cleans up libxml2 memory and finishes gc goroutine when running.
 func Cleanup() {
 	g.Lock()
 	defer g.Unlock()
@@ -89,7 +89,7 @@ func Cleanup() {
 	}
 }
 
-// Initialize the xml handler struct.
+// NewXmlHandlerMem creates a xml handler struct.
 // Always use the Free() method when done using this handler or memory will be leaking.
 // The go garbage collector will not collect the allocated resources.
 func NewXmlHandlerMem(inXml []byte, options Options) (*XmlHandler, error) {
@@ -101,7 +101,7 @@ func NewXmlHandlerMem(inXml []byte, options Options) (*XmlHandler, error) {
 	return &XmlHandler{xPtr}, err
 }
 
-// Initialize the xml handler struct.
+// NewXsdHandlerUrl creates a xsd handler struct.
 // Always use Free() method when done using this handler or memory will be leaking.
 // The go garbage collector will not collect the allocated resources.
 func NewXsdHandlerUrl(url string, options Options) (*XsdHandler, error) {
@@ -114,7 +114,7 @@ func NewXsdHandlerUrl(url string, options Options) (*XsdHandler, error) {
 	return &XsdHandler{sPtr}, err
 }
 
-// This validates an xmlHandler against an xsdHandler and returns the libxml2 validation error text.
+// Validate validates an xmlHandler against an xsdHandler and returns the libxml2 validation error text.
 // Both xmlHandler and xsdHandler have to be created first.
 func (xsdHandler *XsdHandler) Validate(xmlHandler *XmlHandler, options Options) error {
 	if !g.isInitialized() {
@@ -132,12 +132,12 @@ func (xsdHandler *XsdHandler) Validate(xmlHandler *XmlHandler, options Options) 
 
 }
 
-// Frees the schemaPtr, call this when this handler is not needed anymore.
+// Free frees the wrapped schemaPtr, call this when this handler is not needed anymore.
 func (xsdHandler *XsdHandler) Free() {
 	freeSchemaPtr(xsdHandler)
 }
 
-// Frees the xml docPtr, call this when this handler is not needed anymore.
+// Free frees the wrapped xml docPtr, call this when this handler is not needed anymore.
 func (xmlHandler *XmlHandler) Free() {
 	freeDocPtr(xmlHandler)
 }
