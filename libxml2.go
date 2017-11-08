@@ -98,9 +98,9 @@ static struct xsdParserResult cParseUrlSchema(const char *url, const short int o
 	bool err = false;
 	struct xsdParserResult parserResult;
 	char *errBuf=NULL;
-	struct errCtx *ectx=malloc(sizeof(struct errCtx));
+	struct errCtx *ectx=malloc(sizeof(*ectx));
 	ectx->errBuf=calloc(GO_ERR_INIT, sizeof(char));
-	struct errCtx *genEctx=malloc(sizeof(struct errCtx));;
+	struct errCtx *genEctx=malloc(sizeof(*genEctx));;
 	genEctx->errBuf=calloc(GO_ERR_INIT, sizeof(char));
 
 	xmlSchemaPtr schema = NULL;
@@ -158,7 +158,7 @@ static struct xmlParserResult cParseDoc(const char *goXmlSource, const int goXml
 	bool err = false;
 	struct xmlParserResult parserResult;
 	char *errBuf=NULL;
-	struct errCtx *ectx=malloc(sizeof(struct errCtx));
+	struct errCtx *ectx=malloc(sizeof(*ectx));
 	ectx->errBuf=calloc(GO_ERR_INIT, sizeof(char));;
 
 	xmlDocPtr doc=NULL;
@@ -210,7 +210,7 @@ static struct simpleXmlError *cValidate(const xmlDocPtr doc, const xmlSchemaPtr 
 	bool err = false;
 	int schemaErr=0;
 
-	struct simpleXmlError *simpleError = malloc(sizeof(struct simpleXmlError));
+	struct simpleXmlError *simpleError = malloc(sizeof(*simpleError));
 	simpleError->message = calloc(GO_ERR_INIT, sizeof(char));
 	simpleError->node = calloc(GO_ERR_INIT, sizeof(char));
 

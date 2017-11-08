@@ -29,8 +29,8 @@ func TestMemParseXsd(t *testing.T) {
 		guard <- struct{}{}
 		wg.Add(1)
 		go func() {
-			//handler, err := NewXsdHandlerUrl("examples/test1_fail.xsd", ParsErrVerbose)
-			handler, err := NewXsdHandlerUrl("examples/test1_pass.xsd", ParsErrDefault)
+			//handler, err := NewXsdHandlerUrl("examples/test1_pass.xsd", ParsErrDefault)
+			handler, err := NewXsdHandlerUrl("examples/test1_fail.xsd", ParsErrVerbose)
 			if err != nil {
 				//fmt.Println(err)
 			}
@@ -82,6 +82,78 @@ func TestMemParseXml(t *testing.T) {
 	}
 	wg.Wait()
 }
+
+func TestMemParseAltXml(t *testing.T) {
+	fmt.Println("Now Running TestMemParseAltXml")
+	InitWithGc(time.Duration(30) * time.Second)
+
+	defer Cleanup()
+
+	guard := make(chan struct{}, maxGoroutines)
+	var wg sync.WaitGroup
+
+	xmlfile1 := "examples/test1_fail1.xml"
+	//xmlfile1 := "examples/test1_pass.xml"
+
+	fxml1, err := os.Open(xmlfile1)
+	if err != nil {
+		log.Printf("failed to open file: %s", err)
+		return
+	}
+	defer fxml1.Close()
+
+	inXml1, err := ioutil.ReadAll(fxml1)
+	if err != nil {
+		log.Printf("failed to read file: %s", err)
+		return
+	}
+
+	xmlfile2 := "examples/test1_fail1_1.xml"
+	//xmlfile2 := "examples/test1_pass.xml"
+
+	fxml2, err := os.Open(xmlfile2)
+	if err != nil {
+		log.Printf("failed to open file: %s", err)
+		return
+	}
+	defer fxml2.Close()
+
+	inXml2, err := ioutil.ReadAll(fxml2)
+	if err != nil {
+		log.Printf("failed to read file: %s", err)
+		return
+	}
+
+	for i := 0; i < iterations; i++ {
+		var inXml []byte
+		if i%2 == 0 {
+			inXml = inXml1
+		} else {
+			inXml = inXml2
+		}
+
+		guard <- struct{}{}
+		wg.Add(1)
+		go func(inXml []byte, i int) {
+			xmlhandler, err := NewXmlHandlerMem(inXml, ParsErrVerbose)
+			if i%2 == 1 {
+				if !strings.Contains(err.Error(), "Entity: line 9:") {
+					panic(err)
+				}
+			} else {
+				if !strings.HasPrefix(err.Error(), "Entity: line 3:") {
+					panic(err)
+				}
+			}
+			//log.Print(err)
+			xmlhandler.Free()
+			<-guard
+			wg.Done()
+		}(inXml, i)
+	}
+	wg.Wait()
+}
+
 func TestMemValidate(t *testing.T) {
 	fmt.Println("Now Running TestMemValidate")
 	InitWithGc(time.Duration(30) * time.Second)
