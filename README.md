@@ -18,6 +18,7 @@ libxml2-dev is needed, below an example how to install the latest sources as at 
 	`import "github.com/terminalstatic/go-xsd-validate"`
 
 Go get the package:
+
 	go get github.com/terminalstatic/go-xsd-validate
 	
 # Example
