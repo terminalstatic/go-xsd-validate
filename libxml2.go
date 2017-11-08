@@ -104,8 +104,6 @@ static struct xsdParserResult cParseUrlSchema(const char *url, const short int o
 	char *errBuf=NULL;
 	struct errCtx *ectx=malloc(sizeof(*ectx));
 	ectx->errBuf=calloc(GO_ERR_INIT, sizeof(char));
-	struct errCtx *genEctx=malloc(sizeof(*genEctx));;
-	genEctx->errBuf=calloc(GO_ERR_INIT, sizeof(char));
 
 	xmlSchemaPtr schema = NULL;
 	xmlSchemaParserCtxtPtr schemaParserCtxt = NULL;
@@ -119,38 +117,29 @@ static struct xsdParserResult cParseUrlSchema(const char *url, const short int o
 	else
 	{
 		if (options & P_ERR_EXT) {
-			xmlSetGenericErrorFunc(genEctx, genErrorCallback);
+			xmlSchemaSetParserErrors(schemaParserCtxt, noOutputCallback, noOutputCallback, NULL);
+			xmlSetGenericErrorFunc(ectx, genErrorCallback);
 		} else {
 			xmlSetGenericErrorFunc(NULL, noOutputCallback);
+			xmlSchemaSetParserErrors(schemaParserCtxt, genErrorCallback, noOutputCallback, ectx);
 		}
-
-		xmlSchemaSetParserErrors(schemaParserCtxt, genErrorCallback, noOutputCallback, ectx);
 
 		schema = xmlSchemaParse(schemaParserCtxt);
 
 		xmlSchemaFreeParserCtxt(schemaParserCtxt);
 		if (schema == NULL) {
 			err = true;
-			char *tmp = NULL;
-			if (options & P_ERR_EXT) {
-				tmp = (char *) malloc(strlen(ectx->errBuf) + strlen(genEctx->errBuf) + 1);
-				memcpy(tmp, ectx->errBuf, strlen(ectx->errBuf) + 1);
-				strcat(tmp, genEctx->errBuf);
-			} else {
-				tmp = (char *) malloc(strlen(ectx->errBuf) + 1);
-				memcpy(tmp, ectx->errBuf, strlen(ectx->errBuf) + 1);
-			}
+			char *tmp = malloc(strlen(ectx->errBuf) + 1);
+			memcpy(tmp, ectx->errBuf, strlen(ectx->errBuf) + 1);
 			free(ectx->errBuf);
 			ectx->errBuf = tmp;
 		}
 	}
+
 	errBuf=malloc(strlen(ectx->errBuf)+1);
 	memcpy(errBuf,  ectx->errBuf, strlen(ectx->errBuf)+1);
-
 	free(ectx->errBuf);
 	free(ectx);
-	free(genEctx->errBuf);
-	free(genEctx);
 	parserResult.schemaPtr=schema;
 	parserResult.errorStr=errBuf;
 	errno = err ? -1 : 0;
@@ -186,14 +175,13 @@ static struct xmlParserResult cParseDoc(const char *goXmlSource, const int goXml
 
 		xmlFreeParserCtxt(xmlParserCtxt);
 		if (doc == NULL) {
+			err = true;
 			if (options & P_ERR_EXT) {
-				err = true;
 				char *tmp = malloc(strlen(ectx->errBuf) + 1);
 				memcpy(tmp, ectx->errBuf, strlen(ectx->errBuf) + 1);
 				free(ectx->errBuf);
 				ectx->errBuf = tmp;
 			} else {
-				err = true;
 				strcpy(ectx->errBuf, "Malformed xml document");
 			}
 		}
@@ -256,6 +244,8 @@ static struct simpleXmlError *cValidate(const xmlDocPtr doc, const xmlSchemaPtr 
 	errno = err ? -1 : 0;
 	return simpleError;
 }
+
+
 */
 import "C"
 import (

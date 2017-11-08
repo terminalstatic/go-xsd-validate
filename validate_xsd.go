@@ -105,6 +105,8 @@ func NewXmlHandlerMem(inXml []byte, options Options) (*XmlHandler, error) {
 // Always use Free() method when done using this handler or memory will be leaking.
 // The go garbage collector will not collect the allocated resources.
 func NewXsdHandlerUrl(url string, options Options) (*XsdHandler, error) {
+	g.Lock()
+	defer g.Unlock()
 	if !g.isInitialized() {
 		return nil, Libxml2Error{errorMessage{"Libxml2 not initialized"}}
 	}

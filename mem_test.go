@@ -30,7 +30,7 @@ func TestMemParseXsd(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			//handler, err := NewXsdHandlerUrl("examples/test1_pass.xsd", ParsErrDefault)
-			handler, err := NewXsdHandlerUrl("examples/test1_fail.xsd", ParsErrVerbose)
+			handler, err := NewXsdHandlerUrl("examples/test1_pass.xsd", ParsErrVerbose)
 			if err != nil {
 				//fmt.Println(err)
 			}
