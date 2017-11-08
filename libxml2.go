@@ -7,7 +7,7 @@ package xsdvalidate
 #include <errno.h>
 #include <malloc.h>
 #include <stdbool.h>
-#define GO_ERR_INIT 256
+#define GO_ERR_INIT 512
 #define P_ERR_DEFAULT 1
 #define P_ERR_EXT 2
 #define LIBXML_STATIC
@@ -56,11 +56,15 @@ static void genErrorCallback(void *ctx, const char *message, ...) {
 	int lineLen = 1 + vsnprintf(newLine, GO_ERR_INIT, message, varArgs);
 
 	if (lineLen  > GO_ERR_INIT) {
+		va_end(varArgs);
+		va_start(varArgs, message);
 		free(newLine);
 		newLine = malloc(lineLen);
 		vsnprintf(newLine, lineLen, message, varArgs);
+		va_end(varArgs);
+	} else {
+		va_end(varArgs);
 	}
-	va_end(varArgs);
 
 	char *tmp = malloc(oldLen + lineLen);
 	memcpy(tmp, ectx->errBuf, oldLen);
