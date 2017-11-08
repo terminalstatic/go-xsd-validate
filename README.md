@@ -1,4 +1,4 @@
-# xsdvalidate - A go package for xsd validation that utilizes libxml2
+# xsdvalidate
 [![GoDoc](https://godoc.org/github.com/terminalstatic/go-xsd-validate?status.svg)](https://godoc.org/github.com/terminalstatic/go-xsd-validate)
 
 The goal of this package is to preload xsd files and use their in-memory representation to validate xml documents in a concurrent environment, eg. the post bodys of xml service endpoints and hand through libxml2 error messages. Existing packages either didn't provide error details or got stuck under load.
