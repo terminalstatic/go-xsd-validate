@@ -52,6 +52,6 @@ func main() {
 		panic(err)
 	}
 	http.HandleFunc("/xsd", handler)
-	fmt.Printf("Now starting Server on %s\n", addr)
+	fmt.Printf("Starting http server on %s\n", addr)
 	log.Fatal(http.ListenAndServe(addr, nil))
 }
