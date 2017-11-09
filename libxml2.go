@@ -157,32 +157,41 @@ static struct xmlParserResult cParseDoc(const char *goXmlSource, const int goXml
 	xmlDocPtr doc=NULL;
 	xmlParserCtxtPtr xmlParserCtxt=NULL;
 
-	xmlParserCtxt = xmlNewParserCtxt();
-
-	if (xmlParserCtxt == NULL) {
+	if (goXmlSourceLen == 0) {
 		err = true;
-		strcpy(ectx->errBuf, "Xml parser internal error");
-	}
-	else
-	{
 		if (options & P_ERR_EXT) {
-			xmlSetGenericErrorFunc(ectx, genErrorCallback);
+			strcpy(ectx->errBuf, "parser error : Document is empty");
 		} else {
-			xmlSetGenericErrorFunc(NULL, noOutputCallback);
+			strcpy(ectx->errBuf, "Malformed xml document");
 		}
+	} else {
+		xmlParserCtxt = xmlNewParserCtxt();
 
-		doc = xmlParseMemory(goXmlSource, goXmlSourceLen);
-
-		xmlFreeParserCtxt(xmlParserCtxt);
-		if (doc == NULL) {
+		if (xmlParserCtxt == NULL) {
 			err = true;
+			strcpy(ectx->errBuf, "Xml parser internal error");
+		}
+		else
+		{
 			if (options & P_ERR_EXT) {
-				char *tmp = malloc(strlen(ectx->errBuf) + 1);
-				memcpy(tmp, ectx->errBuf, strlen(ectx->errBuf) + 1);
-				free(ectx->errBuf);
-				ectx->errBuf = tmp;
+				xmlSetGenericErrorFunc(ectx, genErrorCallback);
 			} else {
-				strcpy(ectx->errBuf, "Malformed xml document");
+				xmlSetGenericErrorFunc(NULL, noOutputCallback);
+			}
+
+			doc = xmlParseMemory(goXmlSource, goXmlSourceLen);
+
+			xmlFreeParserCtxt(xmlParserCtxt);
+			if (doc == NULL) {
+				err = true;
+				if (options & P_ERR_EXT) {
+					char *tmp = malloc(strlen(ectx->errBuf) + 1);
+					memcpy(tmp, ectx->errBuf, strlen(ectx->errBuf) + 1);
+					free(ectx->errBuf);
+					ectx->errBuf = tmp;
+				} else {
+					strcpy(ectx->errBuf, "Malformed xml document");
+				}
 			}
 		}
 	}
@@ -195,6 +204,7 @@ static struct xmlParserResult cParseDoc(const char *goXmlSource, const int goXml
 	parserResult.errorStr=errBuf;
 	errno = err ? -1 : 0;
 	return parserResult;
+
 }
 
 static struct simpleXmlError *cValidate(const xmlDocPtr doc, const xmlSchemaPtr schema) {
