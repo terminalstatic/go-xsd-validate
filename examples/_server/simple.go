@@ -1,4 +1,4 @@
-// A simple example for xsd validation and http
+// A simple standalone example for xsd validation and http
 package main
 
 import (
