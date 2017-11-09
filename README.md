@@ -9,8 +9,8 @@ The goal of this package is to preload xsd files and use their in-memory represe
 # Install
 libxml2-dev is needed, below an example how to install the latest sources as at the time of writing (Ubuntu, change prefix according to where libs and include files are located):                                                                                               
 
-	curl -sL <a href="ftp://xmlsoft.org/libxml2/libxml2-2.9.5.tar.gz">ftp://xmlsoft.org/libxml2/libxml2-2.9.5.tar.gz</a> | tar -xzf -
-	cd ./libxml2-2.9.5/
+	curl -sL ftp://xmlsoft.org/libxml2/libxml2-2.9.7.tar.gz| tar -xzf -
+	cd ./libxml2-2.9.7/
 	./configure --prefix=/usr  --enable-static --with-threads --with-history
 	make
 	sudo make install
