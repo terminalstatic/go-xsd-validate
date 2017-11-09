@@ -19,7 +19,9 @@ Go get the package:
 
 	go get github.com/terminalstatic/go-xsd-validate
 	
-# Example
+# Examples
+For a simple standalone example see [here](./examples/_server/simple.go).
+
 	xsdvalidate.Init()
 	defer xsdvalidate.Cleanup()
 	xsdhandler, err := xsdvalidate.NewXsdHandlerUrl("examples/test1_split.xsd", xsdvalidate.ParsErrDefault)
