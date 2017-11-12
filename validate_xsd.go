@@ -135,10 +135,10 @@ func (xsdHandler *XsdHandler) Validate(xmlHandler *XmlHandler, options Options) 
 
 }
 
-// ValidateXmlMem validates an xml byte slice against an xsdHandler.
+// ValidateMem validates an xml byte slice against an xsdHandler.
 // If an error is returned it can be of type Libxml2Error, XsdParserError, XmlParserError or ValidationError.
 // The xsdHandler has to be created first.
-func (xsdHandler *XsdHandler) ValidateXmlMem(inXml []byte, parserOptions Options, validatorOptions Options) error {
+func (xsdHandler *XsdHandler) ValidateMem(inXml []byte, parserOptions Options, validatorOptions Options) error {
 	if !g.isInitialized() {
 		return Libxml2Error{errorMessage{"Libxml2 not initialized"}}
 	}

@@ -348,7 +348,7 @@ func TestMemBufAltValidate(t *testing.T) {
 		}
 		go func(inXml []byte, i int) {
 			//start := time.Now()
-			err = xsdhandler.ValidateXmlMem(inXml, ParsErrVerbose, ValidErrDefault)
+			err = xsdhandler.ValidateMem(inXml, ParsErrVerbose, ValidErrDefault)
 			if err != nil {
 				if i%2 == 1 {
 					if !strings.Contains(err.Error(), "Element 'name1'") {
