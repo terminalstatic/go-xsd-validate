@@ -28,8 +28,10 @@ struct errCtx {
 
 typedef enum {
 	NO_ERROR 		= 0,
-	XML_PARSER_ERROR 	= 1,
-	VALIDATION_ERROR 	= 2
+	LIBXML2_ERROR		= 1,
+	XSD_PARSER_ERROR	= 2,
+	XML_PARSER_ERROR 	= 3,
+	VALIDATION_ERROR 	= 4
 } errorType;
 
 struct simpleXmlError {
@@ -222,11 +224,11 @@ static struct simpleXmlError *cValidate(const xmlDocPtr doc, const xmlSchemaPtr 
 	simpleError->node = calloc(GO_ERR_INIT, sizeof(char));
 
 	if (schema == NULL) {
-		simpleError->type = VALIDATION_ERROR;
+		simpleError->type = LIBXML2_ERROR;
 		strcpy(simpleError->message, "Xsd schema null pointer");
 	}
 	else if (doc == NULL) {
-		simpleError->type = VALIDATION_ERROR;
+		simpleError->type = LIBXML2_ERROR;
 		strcpy(simpleError->message, "Xml schema null pointer");
 	}
 	else
@@ -235,7 +237,7 @@ static struct simpleXmlError *cValidate(const xmlDocPtr doc, const xmlSchemaPtr 
 		schemaCtxt = xmlSchemaNewValidCtxt(schema);
 
 		if (schemaCtxt == NULL) {
-			simpleError->type = VALIDATION_ERROR;
+			simpleError->type = LIBXML2_ERROR;
 			strcpy(simpleError->message, "Xml validation internal error");
 		}
 		else
@@ -250,7 +252,7 @@ static struct simpleXmlError *cValidate(const xmlDocPtr doc, const xmlSchemaPtr 
 			}
 			else if (schemaErr < 0)
 			{
-				simpleError->type = VALIDATION_ERROR;
+				simpleError->type = LIBXML2_ERROR;
 				strcpy(simpleError->message, "Xml validation internal error");
 			}
 			else {
@@ -273,7 +275,7 @@ static struct simpleXmlError *cValidateBuf(const void *goXmlSource, const int go
 	struct xmlParserResult parserResult = cParseDoc(goXmlSource, goXmlSourceLen, xmlParserOptions);
 
 	if (schema == NULL) {
-		simpleError->type = VALIDATION_ERROR;
+		simpleError->type = LIBXML2_ERROR;
 		strcpy(simpleError->message, "Xsd schema null pointer");
 	}
 	else if (parserResult.docPtr == NULL) {
@@ -376,9 +378,7 @@ func validateBufWithXsd(inXml []byte, options Options, xsdHandler *XsdHandler) e
 	defer freeSimpleXmlError(sErr)
 	if err != nil {
 		switch sErr._type {
-		case C.XML_PARSER_ERROR:
-			return XmlParserError{errorMessage{strings.Trim(C.GoString(sErr.message), "\n")}}
-		default:
+		case C.VALIDATION_ERROR:
 			return ValidationError{
 				Code:     int(sErr.code),
 				Message:  strings.Trim(C.GoString(sErr.message), "\n"),
@@ -386,6 +386,14 @@ func validateBufWithXsd(inXml []byte, options Options, xsdHandler *XsdHandler) e
 				Line:     int(sErr.line),
 				NodeName: C.GoString(sErr.node),
 			}
+		case C.XML_PARSER_ERROR:
+			return XmlParserError{errorMessage{strings.Trim(C.GoString(sErr.message), "\n")}}
+		case C.LIBXML2_ERROR:
+			return Libxml2Error{errorMessage{strings.Trim(C.GoString(sErr.message), "\n")}}
+		case C.XSD_PARSER_ERROR:
+			return XsdParserError{errorMessage{strings.Trim(C.GoString(sErr.message), "\n")}}
+		default:
+			return Libxml2Error{errorMessage{"Unknown error"}}
 		}
 	}
 	return nil

@@ -117,7 +117,7 @@ func NewXsdHandlerUrl(url string, options Options) (*XsdHandler, error) {
 }
 
 // Validate validates an xmlHandler against an xsdHandler and returns a ValidationError.
-// If an error is returned it is of type ValidationError.
+// If an error is returned it is of type Libxml2Error, XsdParserError, XmlParserError or ValidationError.
 // Both xmlHandler and xsdHandler have to be created first.
 func (xsdHandler *XsdHandler) Validate(xmlHandler *XmlHandler, options Options) error {
 	if !g.isInitialized() {
@@ -136,7 +136,7 @@ func (xsdHandler *XsdHandler) Validate(xmlHandler *XmlHandler, options Options) 
 }
 
 // ValidateXmlMem validates an xml byte slice against an xsdHandler.
-// If an error is returned it can be of type XsdParserError or ValidationError.
+// If an error is returned it can be of type Libxml2Error, XsdParserError, XmlParserError or ValidationError.
 // The xsdHandler has to be created first.
 func (xsdHandler *XsdHandler) ValidateXmlMem(inXml []byte, parserOptions Options, validatorOptions Options) error {
 	if !g.isInitialized() {

@@ -37,8 +37,13 @@ func Example() {
 
 	err = xsdhandler.Validate(xmlhandler, xsdvalidate.ValidErrDefault)
 	if err != nil {
-		fmt.Printf("Error in line: %d\n", err.(xsdvalidate.ValidationError).Line)
-		fmt.Println(err)
+		switch err.(type) {
+		case xsdvalidate.ValidationError:
+			fmt.Printf("Error in line: %d\n", err.(xsdvalidate.ValidationError).Line)
+			fmt.Println(err)
+		default:
+			fmt.Println(err)
+		}
 	}
 	// Output:
 	// Error in line: 3
