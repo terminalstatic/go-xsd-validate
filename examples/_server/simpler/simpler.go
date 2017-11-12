@@ -1,7 +1,8 @@
-// A simple standalone example for xsd validation and http
+// A simpler standalone example for xsd validation and http
 package main
 
 import (
+	"encoding/xml"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -20,25 +21,16 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("content-type", "application/xml; charset=utf-8")
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		fmt.Fprintf(w, fmt.Sprintf("<error>%s</error>", err))
+		fmt.Fprintf(w, fmt.Sprintf("%s\n<error><![CDATA[%s]]></error>", xml.Header, err))
 		return
 	}
 
-	xmlHandler, err := xsdvalidate.NewXmlHandlerMem(body, xsdvalidate.ParsErrVerbose)
-	defer xmlHandler.Free()
+	err = xsdHandler.ValidateXmlMem(body, xsdvalidate.ParsErrVerbose, xsdvalidate.ValidErrDefault)
 	if err != nil {
-		fmt.Fprintf(w, fmt.Sprintf("<error>%s</error>", err))
+		fmt.Fprintf(w, fmt.Sprintf("%s\n<error><![CDATA[%s]]></error>", xml.Header, err))
 		return
 	}
-
-	err = xsdHandler.Validate(xmlHandler, xsdvalidate.ValidErrDefault)
-	if err != nil {
-		fmt.Fprintf(w, fmt.Sprintf("<error>%s</error>", err))
-		return
-	}
-
 	fmt.Fprintf(w, fmt.Sprintf("<no-error>No errors</no-error>"))
-
 }
 
 func main() {

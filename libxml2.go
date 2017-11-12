@@ -9,7 +9,7 @@ package xsdvalidate
 #include <stdbool.h>
 #define GO_ERR_INIT 512
 #define P_ERR_DEFAULT 1
-#define P_ERR_EXT 2
+#define P_ERR_VERBOSE 2
 #define LIBXML_STATIC
 
 struct xsdParserResult {
@@ -26,12 +26,19 @@ struct errCtx {
 	char *errBuf;
 };
 
+typedef enum {
+	NO_ERROR 		= 0,
+	XML_PARSER_ERROR 	= 1,
+	VALIDATION_ERROR 	= 2
+} errorType;
+
 struct simpleXmlError {
-	int	code;
-	char*	message;
-	int 	level;
-	int	line;
-	char*	node;
+	errorType 	type;
+	int		code;
+	char*		message;
+	int 		level;
+	int		line;
+	char*		node;
 };
 
 static void noOutputCallback(void *ctx, const char *message, ...) {}
@@ -116,7 +123,7 @@ static struct xsdParserResult cParseUrlSchema(const char *url, const short int o
 	}
 	else
 	{
-		if (options & P_ERR_EXT) {
+		if (options & P_ERR_VERBOSE) {
 			xmlSchemaSetParserErrors(schemaParserCtxt, noOutputCallback, noOutputCallback, NULL);
 			xmlSetGenericErrorFunc(ectx, genErrorCallback);
 		} else {
@@ -146,7 +153,7 @@ static struct xsdParserResult cParseUrlSchema(const char *url, const short int o
 	return parserResult;
 }
 
-static struct xmlParserResult cParseDoc(const char *goXmlSource, const int goXmlSourceLen, const short int options) {
+static struct xmlParserResult cParseDoc(const void *goXmlSource, const int goXmlSourceLen, const short int options) {
 	xmlLineNumbersDefault(1);
 	bool err = false;
 	struct xmlParserResult parserResult;
@@ -159,7 +166,7 @@ static struct xmlParserResult cParseDoc(const char *goXmlSource, const int goXml
 
 	if (goXmlSourceLen == 0) {
 		err = true;
-		if (options & P_ERR_EXT) {
+		if (options & P_ERR_VERBOSE) {
 			strcpy(ectx->errBuf, "parser error : Document is empty");
 		} else {
 			strcpy(ectx->errBuf, "Malformed xml document");
@@ -173,7 +180,7 @@ static struct xmlParserResult cParseDoc(const char *goXmlSource, const int goXml
 		}
 		else
 		{
-			if (options & P_ERR_EXT) {
+			if (options & P_ERR_VERBOSE) {
 				xmlSetGenericErrorFunc(ectx, genErrorCallback);
 			} else {
 				xmlSetGenericErrorFunc(NULL, noOutputCallback);
@@ -184,7 +191,7 @@ static struct xmlParserResult cParseDoc(const char *goXmlSource, const int goXml
 			xmlFreeParserCtxt(xmlParserCtxt);
 			if (doc == NULL) {
 				err = true;
-				if (options & P_ERR_EXT) {
+				if (options & P_ERR_VERBOSE) {
 					char *tmp = malloc(strlen(ectx->errBuf) + 1);
 					memcpy(tmp, ectx->errBuf, strlen(ectx->errBuf) + 1);
 					free(ectx->errBuf);
@@ -209,19 +216,17 @@ static struct xmlParserResult cParseDoc(const char *goXmlSource, const int goXml
 
 static struct simpleXmlError *cValidate(const xmlDocPtr doc, const xmlSchemaPtr schema) {
 	xmlLineNumbersDefault(1);
-	bool err = false;
-	int schemaErr=0;
 
 	struct simpleXmlError *simpleError = malloc(sizeof(*simpleError));
 	simpleError->message = calloc(GO_ERR_INIT, sizeof(char));
 	simpleError->node = calloc(GO_ERR_INIT, sizeof(char));
 
 	if (schema == NULL) {
-		err = true;
+		simpleError->type = VALIDATION_ERROR;
 		strcpy(simpleError->message, "Xsd schema null pointer");
 	}
 	else if (doc == NULL) {
-		err = true;
+		simpleError->type = VALIDATION_ERROR;
 		strcpy(simpleError->message, "Xml schema null pointer");
 	}
 	else
@@ -230,32 +235,66 @@ static struct simpleXmlError *cValidate(const xmlDocPtr doc, const xmlSchemaPtr 
 		schemaCtxt = xmlSchemaNewValidCtxt(schema);
 
 		if (schemaCtxt == NULL) {
-			err = true;
+			simpleError->type = VALIDATION_ERROR;
 			strcpy(simpleError->message, "Xml validation internal error");
 		}
 		else
 		{
 			xmlSchemaSetValidStructuredErrors(schemaCtxt, simpleStructErrorCallback, simpleError);
-			schemaErr = xmlSchemaValidateDoc(schemaCtxt, doc);
+			int schemaErr = xmlSchemaValidateDoc(schemaCtxt, doc);
 			xmlSchemaFreeValidCtxt(schemaCtxt);
 
 			if (schemaErr > 0)
 			{
-				err = true;
+				simpleError->type = VALIDATION_ERROR;
 			}
 			else if (schemaErr < 0)
 			{
-				err = true;
+				simpleError->type = VALIDATION_ERROR;
 				strcpy(simpleError->message, "Xml validation internal error");
+			}
+			else {
+				simpleError->type = NO_ERROR;
 			}
 		}
 	}
 
-	errno = err ? -1 : 0;
+	errno = simpleError->type == NO_ERROR ? 0 : -1;
 	return simpleError;
 }
 
+static struct simpleXmlError *cValidateBuf(const void *goXmlSource, const int goXmlSourceLen, const short int xmlParserOptions, const xmlSchemaPtr schema) {
+	xmlLineNumbersDefault(1);
 
+	struct simpleXmlError *simpleError = malloc(sizeof(*simpleError));
+	simpleError->message = calloc(GO_ERR_INIT, sizeof(char));
+	simpleError->node = calloc(GO_ERR_INIT, sizeof(char));
+
+	struct xmlParserResult parserResult = cParseDoc(goXmlSource, goXmlSourceLen, xmlParserOptions);
+
+	if (schema == NULL) {
+		simpleError->type = VALIDATION_ERROR;
+		strcpy(simpleError->message, "Xsd schema null pointer");
+	}
+	else if (parserResult.docPtr == NULL) {
+		simpleError->type = XML_PARSER_ERROR;
+		strcpy(simpleError->message, parserResult.errorStr);
+	}
+	else
+	{
+		free(simpleError->node);
+		free(simpleError->message);
+		free(simpleError);
+
+		simpleError = cValidate(parserResult.docPtr, schema);
+		xmlFreeDoc(parserResult.docPtr);
+	}
+
+	free(parserResult.errorStr);
+
+	errno = simpleError->type == NO_ERROR ? 0 : -1;
+	return simpleError;
+}
 */
 import "C"
 import (
@@ -287,8 +326,7 @@ func libXml2Cleanup() {
 
 // The helper function for parsing xml
 func parseXmlMem(inXml []byte, options Options) (C.xmlDocPtr, error) {
-
-	strXml := C.CString(string(inXml))
+	strXml := C.CBytes(inXml)
 	defer C.free(unsafe.Pointer(strXml))
 	pRes, err := C.cParseDoc(strXml, C.int(len(inXml)), C.short(options))
 
@@ -325,6 +363,29 @@ func validateWithXsd(xmlHandler *XmlHandler, xsdHandler *XsdHandler) error {
 			Level:    int(sErr.level),
 			Line:     int(sErr.line),
 			NodeName: C.GoString(sErr.node),
+		}
+	}
+	return nil
+}
+
+// Helper function for validating given an xml byte slice
+func validateBufWithXsd(inXml []byte, options Options, xsdHandler *XsdHandler) error {
+	strXml := C.CBytes(inXml)
+	defer C.free(unsafe.Pointer(strXml))
+	sErr, err := C.cValidateBuf(strXml, C.int(len(inXml)), C.short(options), xsdHandler.schemaPtr)
+	defer freeSimpleXmlError(sErr)
+	if err != nil {
+		switch sErr._type {
+		case C.XML_PARSER_ERROR:
+			return XmlParserError{errorMessage{strings.Trim(C.GoString(sErr.message), "\n")}}
+		default:
+			return ValidationError{
+				Code:     int(sErr.code),
+				Message:  strings.Trim(C.GoString(sErr.message), "\n"),
+				Level:    int(sErr.level),
+				Line:     int(sErr.line),
+				NodeName: C.GoString(sErr.node),
+			}
 		}
 	}
 	return nil

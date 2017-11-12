@@ -202,18 +202,13 @@ func TestMemValidate(t *testing.T) {
 			<-guard
 			wg.Done()
 		}(inXml)
-		/*if i > 0 && (i%1000000) == 0 {
-			fmt.Println("Test paused ...\a\n")
-			time.Sleep(30 * time.Second)
-		}*/
 	}
 	wg.Wait()
 }
 func TestMemAltValidate(t *testing.T) {
 	fmt.Println("Now Running TestMemAltValidate")
-	InitWithGc(time.Duration(30) * time.Second)
+	Init()
 
-	//fmt.Println(syscall.Gettid())
 	defer Cleanup()
 
 	guard := make(chan struct{}, maxGoroutines)
@@ -267,7 +262,7 @@ func TestMemAltValidate(t *testing.T) {
 			inXml = inXml2
 		}
 		go func(inXml []byte, i int) {
-			xmlhandler, err := NewXmlHandlerMem(inXml, ParsErrDefault)
+			xmlhandler, err := NewXmlHandlerMem(inXml, ParsErrVerbose)
 			if err != nil {
 				//panic(err)
 			}
@@ -288,6 +283,86 @@ func TestMemAltValidate(t *testing.T) {
 			//elapsed := time.Since(start)
 			//log.Printf("Validation took %s", elapsed)
 			xmlhandler.Free()
+			<-guard
+			wg.Done()
+		}(inXml, i)
+	}
+	wg.Wait()
+}
+
+func TestMemBufAltValidate(t *testing.T) {
+	fmt.Println("Now Running TestMemAltValidate")
+	Init()
+
+	defer Cleanup()
+
+	guard := make(chan struct{}, maxGoroutines)
+	var wg sync.WaitGroup
+
+	xmlfile1 := "examples/test1_fail2.xml"
+
+	fxml1, err := os.Open(xmlfile1)
+	if err != nil {
+		log.Printf("failed to open file: %s", err)
+		return
+	}
+	defer fxml1.Close()
+
+	inXml1, err := ioutil.ReadAll(fxml1)
+	if err != nil {
+		log.Printf("failed to read file: %s", err)
+		return
+	}
+
+	xmlfile2 := "examples/test1_fail3.xml"
+
+	fxml2, err := os.Open(xmlfile2)
+	if err != nil {
+		log.Printf("failed to open file: %s", err)
+		return
+	}
+	defer fxml2.Close()
+
+	inXml2, err := ioutil.ReadAll(fxml2)
+	if err != nil {
+		log.Printf("failed to read file: %s", err)
+		return
+	}
+
+	xsdhandler, err := NewXsdHandlerUrl("examples/test1_pass.xsd", ParsErrDefault)
+	if err != nil {
+		panic(err)
+	}
+
+	defer xsdhandler.Free()
+
+	for i := 0; i < iterations; i++ {
+		guard <- struct{}{}
+		wg.Add(1)
+
+		var inXml []byte
+		if i%2 == 0 {
+			inXml = inXml1
+		} else {
+			inXml = inXml2
+		}
+		go func(inXml []byte, i int) {
+			//start := time.Now()
+			err = xsdhandler.ValidateXmlMem(inXml, ParsErrVerbose, ValidErrDefault)
+			if err != nil {
+				if i%2 == 1 {
+					if !strings.Contains(err.Error(), "Element 'name1'") {
+						panic(err)
+					}
+				} else {
+					if !strings.Contains(err.Error(), "Element 'shipto'") {
+						panic(err)
+					}
+				}
+				//log.Print(err)
+			}
+			//elapsed := time.Since(start)
+			//log.Printf("Validation took %s", elapsed)
 			<-guard
 			wg.Done()
 		}(inXml, i)

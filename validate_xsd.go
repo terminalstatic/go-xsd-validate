@@ -114,7 +114,7 @@ func NewXsdHandlerUrl(url string, options Options) (*XsdHandler, error) {
 	return &XsdHandler{sPtr}, err
 }
 
-// Validate validates an xmlHandler against an xsdHandler and returns the libxml2 validation error text.
+// Validate validates an xmlHandler against an xsdHandler and returns a typed error.
 // Both xmlHandler and xsdHandler have to be created first.
 func (xsdHandler *XsdHandler) Validate(xmlHandler *XmlHandler, options Options) error {
 	if !g.isInitialized() {
@@ -129,6 +129,22 @@ func (xsdHandler *XsdHandler) Validate(xmlHandler *XmlHandler, options Options) 
 		return XmlParserError{errorMessage{"Xml handler not properly initialized"}}
 	}
 	return validateWithXsd(xmlHandler, xsdHandler)
+
+}
+
+// ValidateXmlBuf validates a xml byte slice against an xsdHandler and returns a typed error.
+// Rhe xsdHandler have to be created first.
+// This is a shortcut to creating and freeing an xmlHandler.
+// Also this is a bit faster less cgo calls are needed.
+func (xsdHandler *XsdHandler) ValidateXmlMem(inXml []byte, parserOptions Options, validatorOptions Options) error {
+	if !g.isInitialized() {
+		return Libxml2Error{errorMessage{"Libxml2 not initialized"}}
+	}
+	if xsdHandler == nil || xsdHandler.schemaPtr == nil {
+		return XsdParserError{errorMessage{"Xsd handler not properly initialized"}}
+
+	}
+	return validateBufWithXsd(inXml, parserOptions, xsdHandler)
 
 }
 

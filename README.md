@@ -20,7 +20,7 @@ Go get the package:
 	go get github.com/terminalstatic/go-xsd-validate
 	
 # Examples
-For a simple standalone example on how to integrate this with an http server see [here](./examples/_server/simple.go).
+Check [this](./examples/_server/simple/simple.go) for a simple example and [that](./examples/_server/simpler/simpler.go) for an even simpler one.
 
 	xsdvalidate.Init()
 	defer xsdvalidate.Cleanup()
