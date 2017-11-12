@@ -41,7 +41,7 @@ func (guard *guard) setInitialized(b bool) {
 var g guard
 
 // Options type for parser/validation options.
-type Options int16
+type Options uint8
 
 // The parser options, ParsErrVerbose will slow down parsing considerably!
 const (
@@ -51,7 +51,7 @@ const (
 
 // Validation options for possible future enhancements.
 const (
-	ValidErrDefault Options = 1 << iota // Default validation error output
+	ValidErrDefault Options = 128 << iota // Default validation error output
 )
 
 var quit chan struct{}
