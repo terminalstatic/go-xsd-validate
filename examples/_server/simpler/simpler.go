@@ -25,7 +25,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = xsdHandler.ValidateMem(body, xsdvalidate.ParsErrVerbose, xsdvalidate.ValidErrDefault)
+	err = xsdHandler.ValidateMem(body, xsdvalidate.ParsErrVerbose)
 	if err != nil {
 		fmt.Fprintf(w, fmt.Sprintf("%s\n<error><![CDATA[%s]]></error>", xml.Header, err))
 		return

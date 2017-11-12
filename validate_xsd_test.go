@@ -193,7 +193,7 @@ func TestValidateMemWithXsdHandlerPass(t *testing.T) {
 	defer xmlFile.Close()
 	inXml, _ := ioutil.ReadAll(xmlFile)
 
-	err = xsdhandler.ValidateMem(inXml, ParsErrDefault, ValidErrDefault)
+	err = xsdhandler.ValidateMem(inXml, ParsErrDefault)
 	if err != nil {
 		fmt.Printf("Error: %s %s\n", t.Name(), err.Error())
 		t.Fail()
@@ -220,7 +220,7 @@ func TestValidateMemWithXsdHandlerFail(t *testing.T) {
 	defer xmlFile.Close()
 	inXml, _ := ioutil.ReadAll(xmlFile)
 
-	err = xsdhandler.ValidateMem(inXml, ParsErrDefault, ValidErrDefault)
+	err = xsdhandler.ValidateMem(inXml, ParsErrDefault)
 	fmt.Printf("Error OK:\n %s %s\n", t.Name(), err.Error())
 	if err == nil {
 		t.Fail()
