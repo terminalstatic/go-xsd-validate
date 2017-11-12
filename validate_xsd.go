@@ -90,6 +90,7 @@ func Cleanup() {
 }
 
 // NewXmlHandlerMem creates a xml handler struct.
+// If an error is returned it can be of type Libxml2Error or XmlParserError.
 // Always use the Free() method when done using this handler or memory will be leaking.
 // The go garbage collector will not collect the allocated resources.
 func NewXmlHandlerMem(inXml []byte, options Options) (*XmlHandler, error) {
@@ -103,6 +104,7 @@ func NewXmlHandlerMem(inXml []byte, options Options) (*XmlHandler, error) {
 
 // NewXsdHandlerUrl creates a xsd handler struct.
 // Always use Free() method when done using this handler or memory will be leaking.
+// If an error is returned it can be of type Libxml2Error or XsdParserError.
 // The go garbage collector will not collect the allocated resources.
 func NewXsdHandlerUrl(url string, options Options) (*XsdHandler, error) {
 	g.Lock()
@@ -114,7 +116,8 @@ func NewXsdHandlerUrl(url string, options Options) (*XsdHandler, error) {
 	return &XsdHandler{sPtr}, err
 }
 
-// Validate validates an xmlHandler against an xsdHandler and returns a typed error.
+// Validate validates an xmlHandler against an xsdHandler and returns a ValidationError.
+// If an error is returned it is of type ValidationError.
 // Both xmlHandler and xsdHandler have to be created first.
 func (xsdHandler *XsdHandler) Validate(xmlHandler *XmlHandler, options Options) error {
 	if !g.isInitialized() {
@@ -132,10 +135,9 @@ func (xsdHandler *XsdHandler) Validate(xmlHandler *XmlHandler, options Options) 
 
 }
 
-// ValidateXmlBuf validates a xml byte slice against an xsdHandler and returns a typed error.
-// Rhe xsdHandler have to be created first.
-// This is a shortcut to creating and freeing an xmlHandler.
-// Also this is a bit faster less cgo calls are needed.
+// ValidateXmlMem validates an xml byte slice against an xsdHandler.
+// If an error is returned it can be of type XsdParserError or ValidationError.
+// The xsdHandler has to be created first.
 func (xsdHandler *XsdHandler) ValidateXmlMem(inXml []byte, parserOptions Options, validatorOptions Options) error {
 	if !g.isInitialized() {
 		return Libxml2Error{errorMessage{"Libxml2 not initialized"}}
