@@ -1,7 +1,7 @@
 # xsdvalidate
 [![GoDoc](https://godoc.org/github.com/terminalstatic/go-xsd-validate?status.svg)](https://godoc.org/github.com/terminalstatic/go-xsd-validate)
 
-The goal of this package is to preload xsd files and use their in-memory representation to validate xml documents in a concurrent environment, eg. the post bodys of xml service endpoints and hand through libxml2 error messages. Similar packages I found on github either didn't provide error details or got stuck under load.
+The main goal of this package is to preload xsd files into memory and use the associated libxml2 structures to validate xml documents in a multithreaded environment, eg. the post bodys of xml service endpoints and hand through libxml2 error messages. Similar packages I found on github either didn't provide error details or got stuck under load. As a side effect the parser errors (if set to verbose) can also provide useful information about malformed xml input.
 
 # Api Reference
 [https://godoc.org/github.com/terminalstatic/go-xsd-validate](https://godoc.org/github.com/terminalstatic/go-xsd-validate)
@@ -20,7 +20,7 @@ Go get the package:
 	go get github.com/terminalstatic/go-xsd-validate
 	
 # Examples
-Check [this](./examples/_server/simple/simple.go) for a simple example and [that](./examples/_server/simpler/simpler.go) for an even simpler one.
+Check [this](./examples/_server/simple/simple.go) for a simple http server example and [that](./examples/_server/simpler/simpler.go) for an even simpler one.
 
 	xsdvalidate.Init()
 	defer xsdvalidate.Cleanup()
