@@ -40,13 +40,26 @@ Check [this](./examples/_server/simple/simple.go) for a simple http server examp
 	    panic(err)
 	}
 	
+	// Option 1:
 	xmlhandler, err := xsdvalidate.NewXmlHandlerMem(inXml, xsdvalidate.ParsErrDefault)
 	if err != nil {
-	    panic(err)
+		panic(err)
 	}
 	defer xmlhandler.Free()
-	
+
 	err = xsdhandler.Validate(xmlhandler, xsdvalidate.ValidErrDefault)
+	if err != nil {
+		switch err.(type) {
+		case xsdvalidate.ValidationError:
+			fmt.Printf("Error in line: %d\n", err.(xsdvalidate.ValidationError).Line)
+			fmt.Println(err)
+		default:
+			fmt.Println(err)
+		}
+	}
+
+	// Option 2:
+	err = xsdhandler.ValidateMem(inXml, xsdvalidate.ValidErrDefault)
 	if err != nil {
 		switch err.(type) {
 		case xsdvalidate.ValidationError:

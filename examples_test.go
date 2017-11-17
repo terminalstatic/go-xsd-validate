@@ -29,6 +29,7 @@ func Example() {
 		panic(err)
 	}
 
+	// Option 1:
 	xmlhandler, err := xsdvalidate.NewXmlHandlerMem(inXml, xsdvalidate.ParsErrDefault)
 	if err != nil {
 		panic(err)
@@ -45,7 +46,21 @@ func Example() {
 			fmt.Println(err)
 		}
 	}
+
+	// Option 2:
+	err = xsdhandler.ValidateMem(inXml, xsdvalidate.ValidErrDefault)
+	if err != nil {
+		switch err.(type) {
+		case xsdvalidate.ValidationError:
+			fmt.Printf("Error in line: %d\n", err.(xsdvalidate.ValidationError).Line)
+			fmt.Println(err)
+		default:
+			fmt.Println(err)
+		}
+	}
 	// Output:
+	// Error in line: 3
+	// Element 'shipto': This element is not expected. Expected is ( orderperson ).
 	// Error in line: 3
 	// Element 'shipto': This element is not expected. Expected is ( orderperson ).
 }

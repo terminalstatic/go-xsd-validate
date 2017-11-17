@@ -14,7 +14,7 @@ import (
 )
 
 const iterations = 1000000
-const maxGoroutines = 100
+const maxGoroutines = 3
 
 func TestMemParseXsd(t *testing.T) {
 	fmt.Println("Now Running TestMemParseXsd")
@@ -291,6 +291,7 @@ func TestMemAltValidate(t *testing.T) {
 }
 
 func TestMemBufAltValidate(t *testing.T) {
+	//runtime.GOMAXPROCS(4)
 	fmt.Println("Now Running TestMemAltValidate")
 	Init()
 
