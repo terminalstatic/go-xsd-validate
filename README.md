@@ -26,20 +26,20 @@ Check [this](./examples/_server/simple/simple.go) for a simple http server examp
 	defer xsdvalidate.Cleanup()
 	xsdhandler, err := xsdvalidate.NewXsdHandlerUrl("examples/test1_split.xsd", xsdvalidate.ParsErrDefault)
 	if err != nil {
-	    panic(err)
+		panic(err)
 	}
 	defer xsdhandler.Free()
-	
+
 	xmlFile, err := os.Open("examples/test1_fail2.xml")
 	if err != nil {
-	    panic(err)
+		panic(err)
 	}
 	defer xmlFile.Close()
 	inXml, err := ioutil.ReadAll(xmlFile)
 	if err != nil {
-	    panic(err)
+		panic(err)
 	}
-	
+
 	// Option 1:
 	xmlhandler, err := xsdvalidate.NewXmlHandlerMem(inXml, xsdvalidate.ParsErrDefault)
 	if err != nil {
@@ -51,8 +51,9 @@ Check [this](./examples/_server/simple/simple.go) for a simple http server examp
 	if err != nil {
 		switch err.(type) {
 		case xsdvalidate.ValidationError:
-			fmt.Printf("Error in line: %d\n", err.(xsdvalidate.ValidationError).Line)
 			fmt.Println(err)
+			fmt.Printf("Error in line: %d\n", err.(xsdvalidate.ValidationError).Errors[0].Line)
+			fmt.Println(err.(xsdvalidate.ValidationError).Errors[0].Message)
 		default:
 			fmt.Println(err)
 		}
@@ -63,8 +64,9 @@ Check [this](./examples/_server/simple/simple.go) for a simple http server examp
 	if err != nil {
 		switch err.(type) {
 		case xsdvalidate.ValidationError:
-			fmt.Printf("Error in line: %d\n", err.(xsdvalidate.ValidationError).Line)
 			fmt.Println(err)
+			fmt.Printf("Error in line: %d\n", err.(xsdvalidate.ValidationError).Errors[0].Line)
+			fmt.Println(err.(xsdvalidate.ValidationError).Errors[0].Message)
 		default:
 			fmt.Println(err)
 		}

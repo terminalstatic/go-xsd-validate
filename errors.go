@@ -1,5 +1,10 @@
 package xsdvalidate
 
+import (
+	"fmt"
+	"strings"
+)
+
 // Common String and Error implementations.
 type errorMessage struct {
 	Message string
@@ -30,8 +35,8 @@ type XsdParserError struct {
 	errorMessage
 }
 
-// ValidationError is returned when xsd validation caused an error, to access the fields use type assertion (see example).
-type ValidationError struct {
+// StructError is a subset of libxml2 xmlError struct.
+type StructError struct {
 	Code     int
 	Message  string
 	Level    int
@@ -39,9 +44,18 @@ type ValidationError struct {
 	NodeName string
 }
 
-// Implementation of the Stringer interface.
+// ValidationError is returned when xsd validation caused an error, to access the fields of the Errors slice use type assertion (see example).
+type ValidationError struct {
+	Errors []StructError
+}
+
+// Implementation of the Stringer interface. Aggregates line numbers and messages of the Errors slice.
 func (e ValidationError) String() string {
-	return e.Message
+	var em string
+	for _, eelem := range e.Errors {
+		em = em + fmt.Sprintf("%d: %s\n", eelem.Line, eelem.Message)
+	}
+	return strings.TrimRight(em, "\n")
 }
 
 // Implementation of the Error interface.
