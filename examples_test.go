@@ -40,8 +40,9 @@ func Example() {
 	if err != nil {
 		switch err.(type) {
 		case xsdvalidate.ValidationError:
-			fmt.Printf("Error in line: %d\n", err.(xsdvalidate.ValidationError).Line)
 			fmt.Println(err)
+			fmt.Printf("Error in line: %d\n", err.(xsdvalidate.ValidationError).Errors[0].Line)
+			fmt.Println(err.(xsdvalidate.ValidationError).Errors[0].Message)
 		default:
 			fmt.Println(err)
 		}
@@ -52,15 +53,18 @@ func Example() {
 	if err != nil {
 		switch err.(type) {
 		case xsdvalidate.ValidationError:
-			fmt.Printf("Error in line: %d\n", err.(xsdvalidate.ValidationError).Line)
 			fmt.Println(err)
+			fmt.Printf("Error in line: %d\n", err.(xsdvalidate.ValidationError).Errors[0].Line)
+			fmt.Println(err.(xsdvalidate.ValidationError).Errors[0].Message)
 		default:
 			fmt.Println(err)
 		}
 	}
 	// Output:
+	// 3: Element 'shipto': This element is not expected. Expected is ( orderperson ).
 	// Error in line: 3
 	// Element 'shipto': This element is not expected. Expected is ( orderperson ).
+	// 3: Element 'shipto': This element is not expected. Expected is ( orderperson ).
 	// Error in line: 3
 	// Element 'shipto': This element is not expected. Expected is ( orderperson ).
 }

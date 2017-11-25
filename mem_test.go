@@ -13,8 +13,8 @@ import (
 	"time"
 )
 
-const iterations = 1000000
-const maxGoroutines = 3
+const iterations = 10000000
+const maxGoroutines = 4
 
 func TestMemParseXsd(t *testing.T) {
 	fmt.Println("Now Running TestMemParseXsd")
@@ -145,7 +145,6 @@ func TestMemParseAltXml(t *testing.T) {
 					panic(err)
 				}
 			}
-			//log.Print(err)
 			xmlhandler.Free()
 			<-guard
 			wg.Done()
@@ -291,16 +290,16 @@ func TestMemAltValidate(t *testing.T) {
 }
 
 func TestMemBufAltValidate(t *testing.T) {
-	//runtime.GOMAXPROCS(4)
-	fmt.Println("Now Running TestMemAltValidate")
-	Init()
+	fmt.Println("Now Running TestMemBufAltValidate")
+	InitWithGc(time.Duration(30) * time.Second)
 
 	defer Cleanup()
 
 	guard := make(chan struct{}, maxGoroutines)
 	var wg sync.WaitGroup
 
-	xmlfile1 := "examples/test1_fail2.xml"
+	//xmlfile1 := "examples/test1_fail2.xml"
+	xmlfile1 := "examples/test1_pass.xml"
 
 	fxml1, err := os.Open(xmlfile1)
 	if err != nil {
@@ -355,11 +354,11 @@ func TestMemBufAltValidate(t *testing.T) {
 					if !strings.Contains(err.Error(), "Element 'name1'") {
 						panic(err)
 					}
-				} else {
+				} /*else {
 					if !strings.Contains(err.Error(), "Element 'shipto'") {
 						panic(err)
 					}
-				}
+				}*/
 				//log.Print(err)
 			}
 			//elapsed := time.Since(start)
