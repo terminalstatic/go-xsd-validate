@@ -8,7 +8,7 @@ package xsdvalidate
 #include <errno.h>
 #include <malloc.h>
 #include <stdbool.h>
-#define GO_ERR_INIT 512
+#define GO_ERR_INIT 1024
 #define P_ERR_DEFAULT 1
 #define P_ERR_VERBOSE 2
 #define LIBXML_STATIC
@@ -316,7 +316,6 @@ static errArray *cValidateBuf(const void *goXmlSource, const int goXmlSourceLen,
 
 	struct simpleXmlError simpleError;
 	simpleError.message = calloc(GO_ERR_INIT, sizeof(char));
-	simpleError.node = calloc(GO_ERR_INIT, sizeof(char));
 
 	struct xmlParserResult parserResult = cParseDoc(goXmlSource, goXmlSourceLen, xmlParserOptions);
 
@@ -329,13 +328,14 @@ static errArray *cValidateBuf(const void *goXmlSource, const int goXmlSourceLen,
 	}
 	else if (parserResult.docPtr == NULL) {
 		simpleError.type = XML_PARSER_ERROR;
+		free(simpleError.message);
+		simpleError.message = malloc(strlen(parserResult.errorStr) + 1);
 		strcpy(simpleError.message, parserResult.errorStr);
 		errArr->data[errArr->len] = simpleError;
 		errArr->len++;
 	}
 	else
 	{
-		free(simpleError.node);
 		free(simpleError.message);
 		free(errArr->data);
 		free(errArr);
