@@ -1,13 +1,6 @@
 // Package xsdvalidate is a go package for xsd validation that utilizes libxml2.
-//
-// The goal of this package is to preload xsd files and use their in-memory representation to validate xml documents in a concurrent environment, eg. the post bodys of xml service endpoints and hand through libxml2 error messages. Similar packages on github either didn't provide error details or got stuck under load.
-//
-// libxml2-dev is needed, below an example how to install the latest sources as at the time of writing (Ubuntu, change prefix according to where libs and include files are located):
-//  curl -sL ftp://xmlsoft.org/libxml2/libxml2-2.9.7.tar.gz | tar -xzf -
-//  cd ./libxml2-2.9.7/
-//  ./configure --prefix=/usr  --enable-static --with-threads --with-history
-//  make
-//  sudo make install
+
+//The goal of this package is to preload xsd files into memory and to validate xml (fast) using libxml2, like post bodys of xml service endpoints or api routers. At the time of writing, similar packages I found on github either didn't provide error details or got stuck under load. In addition to providing error strings it also exposes some fields of libxml2 return structs.
 package xsdvalidate
 
 import "C"

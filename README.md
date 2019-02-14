@@ -1,16 +1,17 @@
-# xsdvalidate
+l xsdvalidate
 [![GoDoc](https://godoc.org/github.com/terminalstatic/go-xsd-validate?status.svg)](https://godoc.org/github.com/terminalstatic/go-xsd-validate)
 
-The main goal of this package is to preload xsd files into memory and use the associated libxml2 structures to validate xml documents in a multithreaded environment, eg. the post bodys of xml service endpoints and hand through libxml2 error messages. Similar packages I found on github either didn't provide error details or got stuck under load. As a side effect the parser errors (if set to verbose) can also provide useful information about malformed xml input.
+The goal of this package is to preload xsd files into memory and to validate xml (fast) using libxml2, like post bodys of xml service endpoints or api routers. At the time of writing, similar packages I found on github either didn't provide error details or got stuck under load. In addition to providing error strings it also exposes some fields of libxml2 return structs. 
 
 # Api Reference
 [https://godoc.org/github.com/terminalstatic/go-xsd-validate](https://godoc.org/github.com/terminalstatic/go-xsd-validate)
 
 # Install
-libxml2-dev is needed, below an example how to install the latest sources as at the time of writing (Ubuntu, change prefix according to where libs and include files are located):                                                                                               
+Install libxml2 dev via distribution package manager or from source, below an example how to install the latest libxml2 from source on linux(Debian/Ubuntu): 
 
-	curl -sL ftp://xmlsoft.org/libxml2/libxml2-2.9.7.tar.gz| tar -xzf -
-	cd ./libxml2-2.9.7/
+	curl -L ftp://xmlsoft.org/libxml2/LATEST_LIBXML2 -o ./LIBXML2_LATEST.tar.gz
+	tar -xf ./LIBXML2_LATEST.tar.gz
+	cd ./libxml2*
 	./configure --prefix=/usr  --enable-static --with-threads --with-history
 	make
 	sudo make install
@@ -61,7 +62,7 @@ Check [this](./examples/_server/simple/simple.go) for a simple http server examp
 
 	// Option 2:
 	err = xsdhandler.ValidateMem(inXml, xsdvalidate.ValidErrDefault)
-	if err != nil {
+	ifT err != nil {
 		switch err.(type) {
 		case xsdvalidate.ValidationError:
 			fmt.Println(err)
