@@ -470,14 +470,14 @@ func freeDocPtr(xmlHandler *XmlHandler) {
 	}
 }
 
-// Ticker for gc and malloc_trim
+// Ticker for gc
 func gcTicker(d time.Duration, quit chan struct{}) {
 	ticker := time.NewTicker(d)
 	for {
 		select {
 		case <-ticker.C:
 			runtime.GC()
-			C.malloc_trim(0)
+			//C.malloc_trim(0)
 		case <-quit:
 			ticker.Stop()
 			return
