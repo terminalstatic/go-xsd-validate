@@ -23,6 +23,7 @@ Go get the package:
 # Examples
 Check [this](./examples/_server/simple/simple.go) for a simple http server example and [that](./examples/_server/simpler/simpler.go) for an even simpler one.
 
+```go
 	xsdvalidate.Init()
 	defer xsdvalidate.Cleanup()
 	xsdhandler, err := xsdvalidate.NewXsdHandlerUrl("examples/test1_split.xsd", xsdvalidate.ParsErrDefault)
@@ -72,6 +73,7 @@ Check [this](./examples/_server/simple/simple.go) for a simple http server examp
 			fmt.Println(err)
 		}
 	}
+```
 
 # Licence
 [MIT](./LICENSE)
