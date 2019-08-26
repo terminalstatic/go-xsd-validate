@@ -7,6 +7,7 @@ The goal of this package is to preload xsd files into memory and to validate xml
 [https://godoc.org/github.com/terminalstatic/go-xsd-validate](https://godoc.org/github.com/terminalstatic/go-xsd-validate)
 
 # Install
+## Package install with linux:
 Install libxml2 dev via distribution package manager or from source, below an example how to install the latest libxml2 from source on linux(Debian/Ubuntu): 
 
 	curl -L ftp://xmlsoft.org/libxml2/LATEST_LIBXML2 -o ./LIBXML2_LATEST.tar.gz
@@ -15,8 +16,28 @@ Install libxml2 dev via distribution package manager or from source, below an ex
 	./configure --prefix=/usr  --enable-static --with-threads --with-history
 	make
 	sudo make install
+
+## Package install with OS X:
+Install dev macOS SDK headers for compiling locally
+
+```
+xcode-select --install
+```
+
+NOTE: If you're on OS X Mojave (10.14), these were moved from `/usr/include`, see: [this post](https://silvae86.github.io/sysadmin/mac/osx/mojave/beta/libxml2/2018/07/05/fixing-missing-headers-for-homebrew-in-mac-osx-mojave/) for details and the below command will intall the headers normally to root. If you're  on an earlier version skip this step
+
+```
+sudo installer -pkg /Library/Developer/CommandLineTools/Packages/macOS_SDK_headers_for_macOS_10.14.pkg -target /
+```
+
+Install libxml2 via Homebrew, initialize the modules, build the package
+```
+brew install libxml2
+go mod init xsdvalidate
+go build xsdvalidate
+```
 	
-Go get the package:
+## Go get the package:
 
 	go get github.com/terminalstatic/go-xsd-validate
 	
