@@ -17,11 +17,17 @@ Install libxml2 dev via distribution package manager or from source, below an ex
 	make
 	sudo make install
 
+Go get the package:
+
+	go get github.com/terminalstatic/go-xsd-validate
+
 ## Package install with OS X:
-Install dev macOS SDK headers for compiling locally
+Install dev macOS SDK headers for compiling locally, clone the repo and cd to it.
 
 ```
 xcode-select --install
+git clone https://github.com/terminalstatic/go-xsd-validate.git
+cd go-xsd-validate
 ```
 
 NOTE: If you're on OS X Mojave (10.14), these were moved from `/usr/include`, see: [this post](https://silvae86.github.io/sysadmin/mac/osx/mojave/beta/libxml2/2018/07/05/fixing-missing-headers-for-homebrew-in-mac-osx-mojave/) for details and the below command will intall the headers normally to root. If you're  on an earlier version skip this step
@@ -37,9 +43,6 @@ go mod init xsdvalidate
 go build xsdvalidate
 ```
 	
-## Go get the package:
-
-	go get github.com/terminalstatic/go-xsd-validate
 	
 # Examples
 Check [this](./examples/_server/simple/simple.go) for a simple http server example and [that](./examples/_server/simpler/simpler.go) for an even simpler one.
