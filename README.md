@@ -22,6 +22,7 @@ Go get the package:
 	
 # Examples
 Check [this](./examples/_server/simple/simple.go) for a simple http server example and [that](./examples/_server/simpler/simpler.go) for an even simpler one.
+To see how this could be plugged into middleware see the [go-chi](https://github.com/go-chi/chi) [example](./examples/_server/chi/chi.go) I came up with. 
 
 ```go
 	xsdvalidate.Init()
