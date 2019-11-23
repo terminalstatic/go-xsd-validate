@@ -17,8 +17,6 @@ var xsdHandler *xsdvalidate.XsdHandler
 
 func readBody(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		defer r.Body.Close()
-
 		body, err := ioutil.ReadAll(r.Body)
 
 		if err != nil {

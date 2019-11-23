@@ -14,8 +14,6 @@ import (
 var xsdHandler *xsdvalidate.XsdHandler
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	defer r.Body.Close()
-
 	if r.Method != "POST" {
 		http.NotFound(w, r)
 		return
