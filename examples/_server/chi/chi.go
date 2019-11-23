@@ -1,4 +1,4 @@
-// A simpler standalone example for xsd validation and http
+// An example using go-chi (https://github.com/go-chi/chi) middleware and context
 package main
 
 import (
@@ -73,13 +73,6 @@ func main() {
 
 	})
 
-	/*	var err error
-		xsdHandler, err = xsdvalidate.NewXsdHandlerUrl("address.xsd", xsdvalidate.ParsErrDefault)
-		defer xsdHandler.Free()
-		if err != nil {
-			panic(err)
-		}
-		http.HandleFunc("/address", handler)*/
 	fmt.Printf("Starting http server on %s\n", addr)
 	log.Fatal(http.ListenAndServe(addr, r))
 }
