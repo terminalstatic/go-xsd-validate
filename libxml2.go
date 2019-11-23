@@ -6,7 +6,7 @@ package xsdvalidate
 #include <string.h>
 #include <libxml/xmlschemastypes.h>
 #include <errno.h>
-#include <malloc.h>
+#include <stdlib.h>
 #include <stdbool.h>
 #define GO_ERR_INIT 1024
 #define P_ERR_DEFAULT 1

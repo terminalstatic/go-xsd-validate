@@ -21,23 +21,23 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("content-type", "application/xml; charset=utf-8")
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		fmt.Fprintf(w, fmt.Sprintf("<error>%s</error>", err))
+		fmt.Fprintf(w, fmt.Sprintf("%s<error>%s</error>", xml.Header, err))
 		return
 	}
 
 	xmlHandler, err := xsdvalidate.NewXmlHandlerMem(body, xsdvalidate.ParsErrVerbose)
 	defer xmlHandler.Free()
 	if err != nil {
-		fmt.Fprintf(w, fmt.Sprintf("%s\n<error><![CDATA[%s]]></error>", xml.Header, err))
+		fmt.Fprintf(w, fmt.Sprintf("%s<error><![CDATA[%s]]></error>", xml.Header, err))
 		return
 	}
 
 	err = xsdHandler.Validate(xmlHandler, xsdvalidate.ValidErrDefault)
 	if err != nil {
-		fmt.Fprintf(w, fmt.Sprintf("%s\n<error><![CDATA[%s]]></error>", xml.Header, err))
+		fmt.Fprintf(w, fmt.Sprintf("%s<error><![CDATA[%s]]></error>", xml.Header, err))
 		return
 	}
-	fmt.Fprintf(w, fmt.Sprintf("<no-error>No errors</no-error>"))
+	fmt.Fprintf(w, fmt.Sprintf("%s<no-error>No errors</no-error>", xml.Header))
 }
 
 func main() {
