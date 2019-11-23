@@ -14,10 +14,13 @@ import (
 var xsdHandler *xsdvalidate.XsdHandler
 
 func handler(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+
 	if r.Method != "POST" {
 		http.NotFound(w, r)
 		return
 	}
+
 	w.Header().Set("content-type", "application/xml; charset=utf-8")
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -30,6 +33,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, fmt.Sprintf("%s<error><![CDATA[%s]]></error>", xml.Header, err))
 		return
 	}
+
 	fmt.Fprintf(w, fmt.Sprintf("%s<no-error>No errors</no-error>", xml.Header))
 }
 
@@ -43,6 +47,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
 	http.HandleFunc("/xsd", handler)
 	fmt.Printf("Starting http server on %s\n", addr)
 	log.Fatal(http.ListenAndServe(addr, nil))
