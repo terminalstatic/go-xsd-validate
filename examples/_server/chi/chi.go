@@ -40,7 +40,7 @@ func validateBody(next http.Handler) http.Handler {
 			return
 		}
 
-		next.ServeHTTP(w, r.WithContext(ctx))
+		next.ServeHTTP(w, r)
 	})
 }
 
@@ -57,7 +57,7 @@ func main() {
 	}
 
 	r := chi.NewRouter()
-	r.Use(middleware.Logger)
+	r.Use(middleware.StripSlashes)
 	r.Use(readBody)
 	r.Use(validateBody)
 
