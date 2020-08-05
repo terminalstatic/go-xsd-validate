@@ -62,8 +62,8 @@ func Init() error {
 	return nil
 }
 
-// InitWithGc initializes lbxml2 with a goroutine that trims memory and runs the go gc every d duration.
-// Not required but can help to keep the memory footprint at bay when doing tons of validations.
+// InitWithGc initializes lbxml2 with a goroutine that runs the go gc every d duration.
+// Not required but might help to keep the memory footprint at bay when doing tons of validations.
 func InitWithGc(d time.Duration) {
 	Init()
 	quit = make(chan struct{})
