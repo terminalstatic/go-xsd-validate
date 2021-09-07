@@ -119,7 +119,7 @@ func NewXsdHandlerMem(inSchema []byte, options Options) (*XsdHandler, error) {
 	if !g.isInitialized() {
 		return nil, Libxml2Error{errorMessage{"Libxml2 not initialized"}}
 	}
-	sPtr, err := formXsdSchema(inSchema, options)
+	sPtr, err := parseMemSchema(inSchema, options)
 	return &XsdHandler{sPtr}, err
 }
 

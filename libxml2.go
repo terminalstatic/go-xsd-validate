@@ -454,8 +454,8 @@ func parseUrlSchema(url string, options Options) (C.xmlSchemaPtr, error) {
 	return pRes.schemaPtr, nil
 }
 
-// The helper function for setting up an in-memory xsd source
-func formXsdSchema(xsd []byte, options Options) (C.xmlSchemaPtr, error) {
+// The helper function for parsing an in-memory schema
+func parseMemSchema(xsd []byte, options Options) (C.xmlSchemaPtr, error) {
 	strXsd := C.CBytes(xsd)
 	defer C.free(unsafe.Pointer(strXsd))
 
