@@ -109,7 +109,7 @@ func NewXsdHandlerUrl(url string, options Options) (*XsdHandler, error) {
 	return &XsdHandler{sPtr}, err
 }
 
-// NewXsdhandlerString creates an xsd handler struct.
+// NewXsdHandlerMem creates an xsd handler struct.
 // Always use Free() method when done using this handler or memory will leak.
 // If an error is returned it can be of type Libxml2Error or XsdParserError.
 // The go garbage collector will not collect the allocated resources.

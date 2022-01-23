@@ -139,8 +139,7 @@ static void simpleStructErrorCallback(void *ctx, xmlErrorPtr p) {
 	sErrArr->len++;
 }
 
-static struct xsdParserResult cParseUrlSchema(const char *url, const short int options) {
-	xmlLineNumbersDefault(1);
+static struct xsdParserResult parseSchema(xmlSchemaParserCtxtPtr schemaParserCtxt, const short int options) {
 	bool err = false;
 	struct xsdParserResult parserResult;
 	char *errBuf=NULL;
@@ -148,9 +147,6 @@ static struct xsdParserResult cParseUrlSchema(const char *url, const short int o
 	ectx.errBuf=calloc(GO_ERR_INIT, sizeof(char));
 
 	xmlSchemaPtr schema = NULL;
-	xmlSchemaParserCtxtPtr schemaParserCtxt = NULL;
-
-	schemaParserCtxt = xmlSchemaNewParserCtxt(url);
 
 	if (schemaParserCtxt == NULL) {
 		err = true;
@@ -187,52 +183,22 @@ static struct xsdParserResult cParseUrlSchema(const char *url, const short int o
 	return parserResult;
 }
 
-static struct xsdParserResult cParseXsdMem(const void *xsd, const int goXsdSourceLen, const short int options) {
+static struct xsdParserResult cParseUrlSchema(const char *url, const short int options) {
 	xmlLineNumbersDefault(1);
-	bool err = false;
-	struct xsdParserResult parserResult;
-	char *errBuf=NULL;
-	struct errCtx ectx;
-	ectx.errBuf=calloc(GO_ERR_INIT, sizeof(char));
 
-	xmlSchemaPtr schema = NULL;
 	xmlSchemaParserCtxtPtr schemaParserCtxt = NULL;
+	schemaParserCtxt = xmlSchemaNewParserCtxt(url);
+	return parseSchema(schemaParserCtxt, options);
 
+}
+
+static struct xsdParserResult cParseMemSchema(const void *xsd, const int goXsdSourceLen, const short int options) {
+	xmlLineNumbersDefault(1);
+
+	xmlSchemaParserCtxtPtr schemaParserCtxt = NULL;
 	schemaParserCtxt = xmlSchemaNewMemParserCtxt(xsd, goXsdSourceLen);
 
-	if (schemaParserCtxt == NULL) {
-		err = true;
-		strcpy(ectx.errBuf, "Xsd parser internal error");
-	}
-	else
-	{
-		if (options & P_ERR_VERBOSE) {
-			xmlSchemaSetParserErrors(schemaParserCtxt, noOutputCallback, noOutputCallback, NULL);
-			xmlSetGenericErrorFunc(&ectx, genErrorCallback);
-		} else {
-			xmlSetGenericErrorFunc(NULL, noOutputCallback);
-			xmlSchemaSetParserErrors(schemaParserCtxt, genErrorCallback, noOutputCallback, &ectx);
-		}
-
-		schema = xmlSchemaParse(schemaParserCtxt);
-
-		xmlSchemaFreeParserCtxt(schemaParserCtxt);
-		if (schema == NULL) {
-			err = true;
-			char *tmp = malloc(strlen(ectx.errBuf) + 1);
-			memcpy(tmp, ectx.errBuf, strlen(ectx.errBuf) + 1);
-			free(ectx.errBuf);
-			ectx.errBuf = tmp;
-		}
-	}
-
-	errBuf=malloc(strlen(ectx.errBuf)+1);
-	memcpy(errBuf,  ectx.errBuf, strlen(ectx.errBuf)+1);
-	free(ectx.errBuf);
-	parserResult.schemaPtr=schema;
-	parserResult.errorStr=errBuf;
-	errno = err ? -1 : 0;
-	return parserResult;
+	return parseSchema(schemaParserCtxt, options);
 }
 
 static struct xmlParserResult cParseDoc(const void *goXmlSource, const int goXmlSourceLen, const short int options) {
@@ -459,7 +425,7 @@ func parseMemSchema(xsd []byte, options Options) (C.xmlSchemaPtr, error) {
 	strXsd := C.CBytes(xsd)
 	defer C.free(unsafe.Pointer(strXsd))
 
-	pRes, err := C.cParseXsdMem(strXsd, C.int(len(xsd)), C.short(options))
+	pRes, err := C.cParseMemSchema(strXsd, C.int(len(xsd)), C.short(options))
 	defer C.free(unsafe.Pointer(pRes.errorStr))
 	if err != nil {
 		rStr := C.GoString(pRes.errorStr)
