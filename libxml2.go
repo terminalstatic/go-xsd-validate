@@ -139,8 +139,7 @@ static void simpleStructErrorCallback(void *ctx, xmlErrorPtr p) {
 	sErrArr->len++;
 }
 
-static struct xsdParserResult cParseUrlSchema(const char *url, const short int options) {
-	xmlLineNumbersDefault(1);
+static struct xsdParserResult parseSchema(xmlSchemaParserCtxtPtr schemaParserCtxt, const short int options) {
 	bool err = false;
 	struct xsdParserResult parserResult;
 	char *errBuf=NULL;
@@ -148,9 +147,6 @@ static struct xsdParserResult cParseUrlSchema(const char *url, const short int o
 	ectx.errBuf=calloc(GO_ERR_INIT, sizeof(char));
 
 	xmlSchemaPtr schema = NULL;
-	xmlSchemaParserCtxtPtr schemaParserCtxt = NULL;
-
-	schemaParserCtxt = xmlSchemaNewParserCtxt(url);
 
 	if (schemaParserCtxt == NULL) {
 		err = true;
@@ -185,6 +181,24 @@ static struct xsdParserResult cParseUrlSchema(const char *url, const short int o
 	parserResult.errorStr=errBuf;
 	errno = err ? -1 : 0;
 	return parserResult;
+}
+
+static struct xsdParserResult cParseUrlSchema(const char *url, const short int options) {
+	xmlLineNumbersDefault(1);
+
+	xmlSchemaParserCtxtPtr schemaParserCtxt = NULL;
+	schemaParserCtxt = xmlSchemaNewParserCtxt(url);
+	return parseSchema(schemaParserCtxt, options);
+
+}
+
+static struct xsdParserResult cParseMemSchema(const void *xsd, const int goXsdSourceLen, const short int options) {
+	xmlLineNumbersDefault(1);
+
+	xmlSchemaParserCtxtPtr schemaParserCtxt = NULL;
+	schemaParserCtxt = xmlSchemaNewMemParserCtxt(xsd, goXsdSourceLen);
+
+	return parseSchema(schemaParserCtxt, options);
 }
 
 static struct xmlParserResult cParseDoc(const void *goXmlSource, const int goXmlSourceLen, const short int options) {
@@ -398,6 +412,20 @@ func parseUrlSchema(url string, options Options) (C.xmlSchemaPtr, error) {
 	defer C.free(unsafe.Pointer(strUrl))
 
 	pRes, err := C.cParseUrlSchema(strUrl, C.short(options))
+	defer C.free(unsafe.Pointer(pRes.errorStr))
+	if err != nil {
+		rStr := C.GoString(pRes.errorStr)
+		return nil, XsdParserError{errorMessage{strings.Trim(rStr, "\n")}}
+	}
+	return pRes.schemaPtr, nil
+}
+
+// The helper function for parsing an in-memory schema
+func parseMemSchema(xsd []byte, options Options) (C.xmlSchemaPtr, error) {
+	strXsd := C.CBytes(xsd)
+	defer C.free(unsafe.Pointer(strXsd))
+
+	pRes, err := C.cParseMemSchema(strXsd, C.int(len(xsd)), C.short(options))
 	defer C.free(unsafe.Pointer(pRes.errorStr))
 	if err != nil {
 		rStr := C.GoString(pRes.errorStr)

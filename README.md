@@ -21,7 +21,7 @@ Go get the package:
 	go get github.com/terminalstatic/go-xsd-validate
 	
 # Examples
-Check [this](./examples/_server/simple/simple.go) for a simple http server example and [that](./examples/_server/simpler/simpler.go) for an even simpler one.
+Check [this](./examples/_server/simple/simple.go) for a simple http server example and [that](./examples/_server/simpler/simpler.go) for an even simpler one. Look at [this](./examples/_server/simpler_mem/simpler_mem.go) for an example using Go's `embed` package to bake an XML schema into a simple http server.
 To see how this could be plugged into middleware see the [go-chi](https://github.com/go-chi/chi) [example](./examples/_server/chi/chi.go) I came up with. 
 
 ```go

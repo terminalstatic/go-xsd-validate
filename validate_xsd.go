@@ -109,6 +109,20 @@ func NewXsdHandlerUrl(url string, options Options) (*XsdHandler, error) {
 	return &XsdHandler{sPtr}, err
 }
 
+// NewXsdHandlerMem creates an xsd handler struct.
+// Always use Free() method when done using this handler or memory will leak.
+// If an error is returned it can be of type Libxml2Error or XsdParserError.
+// The go garbage collector will not collect the allocated resources.
+func NewXsdHandlerMem(inSchema []byte, options Options) (*XsdHandler, error) {
+	g.Lock()
+	defer g.Unlock()
+	if !g.isInitialized() {
+		return nil, Libxml2Error{errorMessage{"Libxml2 not initialized"}}
+	}
+	sPtr, err := parseMemSchema(inSchema, options)
+	return &XsdHandler{sPtr}, err
+}
+
 // Validate validates an xmlHandler against an xsdHandler and returns a ValidationError.
 // If an error is returned it is of type Libxml2Error, XsdParserError, XmlParserError or ValidationError.
 // Both xmlHandler and xsdHandler have to be created first.
