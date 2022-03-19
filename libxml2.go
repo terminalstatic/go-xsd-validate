@@ -61,10 +61,24 @@ static errArray initErrArray() {
     return errArr;
 }
 
+static void freeErrArray(errArray* errArr) {
+    for (int i = 0; i < errArr->len; i++) {
+        free(errArr->data[i].message);
+        free(errArr->data[i].node);
+    }
+    free(errArr->data);
+}
+
 static errCtx initErrCtx(size_t len, size_t cap) {
     errCtx ectx = {.errBuf = malloc(cap), .len = len, .cap = cap};
     memset(ectx.errBuf, '\0', len);
     return ectx;
+}
+
+static void freeErrCtx(errCtx ectx) {
+    free(ectx.errBuf);
+    ectx.len=0;
+    ectx.cap=0;
 }
 
 static void appendErrCtxErrBuff(errCtx* ectx, const char* buffStr) {
@@ -90,14 +104,6 @@ static void appendErrCtxErrBuff(errCtx* ectx, const char* buffStr) {
     free(ectx->errBuf);
     ectx->errBuf = tmp;
     ectx->len = newLen;
-}
-
-static void freeErrArray(errArray* errArr) {
-    for (int i = 0; i < errArr->len; i++) {
-        free(errArr->data[i].message);
-        free(errArr->data[i].node);
-    }
-    free(errArr->data);
 }
 
 static void noOutputCallback(void* ctx, const char* message, ...) {}
@@ -181,16 +187,18 @@ static struct xsdParserResult parseSchema(
     bool err = false;
     struct xsdParserResult parserResult;
     errCtx ectx = initErrCtx(1, GO_ERR_INIT);
+    errCtx ectxParse = initErrCtx(1, GO_ERR_INIT);
 
     xmlSchemaPtr schema = NULL;
 
     if (schemaParserCtxt == NULL) {
         err = true;
         const char msg[] = "Xsd parser internal error";
+        freeErrCtx(ectxParse);
         appendErrCtxErrBuff(&ectx, msg);
     } else {
         if (options & P_ERR_VERBOSE) {
-            xmlSchemaSetParserErrors(schemaParserCtxt, noOutputCallback, noOutputCallback, NULL);
+            xmlSchemaSetParserErrors(schemaParserCtxt, genErrorCallback, noOutputCallback, &ectxParse);
             xmlSetGenericErrorFunc(&ectx, genErrorCallback);
         } else {
             xmlSetGenericErrorFunc(NULL, noOutputCallback);
@@ -201,13 +209,17 @@ static struct xsdParserResult parseSchema(
 
         xmlSchemaFreeParserCtxt(schemaParserCtxt);
         if (schema == NULL) {
+            freeErrCtx(ectx);
+            ectx = ectxParse;
             err = true;
+        } else {
+            freeErrCtx(ectxParse);
         }
     }
 
     parserResult.errorStr = malloc(ectx.len);
     memcpy(parserResult.errorStr, ectx.errBuf, ectx.len);
-    free(ectx.errBuf);
+    freeErrCtx(ectx);
     parserResult.schemaPtr = schema;
     errno = err ? -1 : 0;
     return parserResult;
@@ -268,9 +280,7 @@ static struct xmlParserResult cParseDoc(const void* goXmlSource,
             xmlFreeParserCtxt(xmlParserCtxt);
             if (doc == NULL) {
                 err = true;
-                if (options & P_ERR_VERBOSE) {
-                    // TODO
-                } else {
+                if (!(options & P_ERR_VERBOSE)) {
                     const char msg[] = "Malformed xml document";
                     appendErrCtxErrBuff(&ectx, msg);
                 }
@@ -280,7 +290,7 @@ static struct xmlParserResult cParseDoc(const void* goXmlSource,
 
     parserResult.errorStr = malloc(ectx.len);
     memcpy(parserResult.errorStr, ectx.errBuf, ectx.len);
-    free(ectx.errBuf);
+    freeErrCtx(ectx);
     parserResult.docPtr = doc;
     errno = err ? -1 : 0;
     return parserResult;
