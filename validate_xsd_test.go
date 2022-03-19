@@ -1,3 +1,4 @@
+//go:build apitest
 // +build apitest
 
 package xsdvalidate
@@ -9,11 +10,23 @@ import (
 	"testing"
 )
 
+func TestAddressUrlHandlerPass(t *testing.T) {
+	Init()
+	defer Cleanup()
+
+	handler, err := NewXsdHandlerUrl("./examples/test_address.xsd", ParsErrVerbose)
+	if err != nil {
+		fmt.Printf("%s %s\n", t.Name(), err.Error())
+		t.Fail()
+	}
+	defer handler.Free()
+}
+
 func TestXsdUrlHandlerPass(t *testing.T) {
 	Init()
 	defer Cleanup()
 
-	handler, err := NewXsdHandlerUrl("examples/test1_split.xsd", ParsErrDefault)
+	handler, err := NewXsdHandlerUrl("./examples/test1_split.xsd", ParsErrVerbose)
 	if err != nil {
 		fmt.Printf("%s %s\n", t.Name(), err.Error())
 		t.Fail()
