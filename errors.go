@@ -42,6 +42,7 @@ type StructError struct {
 	Level    int
 	Line     int
 	NodeName string
+	Path     string
 }
 
 // ValidationError is returned when xsd validation caused an error, to access the fields of the Errors slice use type assertion (see example).
