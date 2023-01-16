@@ -513,7 +513,6 @@ func validateBufWithXsd(inXml []byte, options Options, xsdHandler *XsdHandler) e
 		default:
 			return Libxml2Error{errorMessage{"Unknown error"}}
 		}
-		return ValidationError{}
 	}
 	return nil
 }

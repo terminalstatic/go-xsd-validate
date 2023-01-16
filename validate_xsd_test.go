@@ -1,17 +1,17 @@
-//go:build apitest
-// +build apitest
-
 package xsdvalidate
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"testing"
 )
 
 func TestAddressUrlHandlerPass(t *testing.T) {
-	Init()
+	err := Init()
+	if err != nil {
+		panic(err)
+	}
 	defer Cleanup()
 
 	handler, err := NewXsdHandlerUrl("./examples/test_address.xsd", ParsErrVerbose)
@@ -23,7 +23,10 @@ func TestAddressUrlHandlerPass(t *testing.T) {
 }
 
 func TestXsdUrlHandlerPass(t *testing.T) {
-	Init()
+	err := Init()
+	if err != nil {
+		panic(err)
+	}
 	defer Cleanup()
 
 	handler, err := NewXsdHandlerUrl("./examples/test1_split.xsd", ParsErrVerbose)
@@ -34,7 +37,10 @@ func TestXsdUrlHandlerPass(t *testing.T) {
 	defer handler.Free()
 }
 func TestXsdUrlHandlerFail(t *testing.T) {
-	Init()
+	err := Init()
+	if err != nil {
+		panic(err)
+	}
 	defer Cleanup()
 
 	handler, err := NewXsdHandlerUrl("examples/test1_fail.xsd", ParsErrVerbose)
@@ -45,7 +51,10 @@ func TestXsdUrlHandlerFail(t *testing.T) {
 	defer handler.Free()
 }
 func TestXmlMemHandlerPass(t *testing.T) {
-	Init()
+	err := Init()
+	if err != nil {
+		panic(err)
+	}
 	defer Cleanup()
 
 	xmlFilePass, err := os.Open("examples/test1_pass.xml")
@@ -55,7 +64,7 @@ func TestXmlMemHandlerPass(t *testing.T) {
 	}
 	defer xmlFilePass.Close()
 
-	inXml, _ := ioutil.ReadAll(xmlFilePass)
+	inXml, _ := io.ReadAll(xmlFilePass)
 
 	handler, err := NewXmlHandlerMem(inXml, ParsErrDefault)
 	if err != nil {
@@ -66,7 +75,10 @@ func TestXmlMemHandlerPass(t *testing.T) {
 }
 
 func TestXmlMemHandlerFail(t *testing.T) {
-	Init()
+	err := Init()
+	if err != nil {
+		panic(err)
+	}
 	defer Cleanup()
 
 	xmlFilePass, err := os.Open("examples/test1_fail1.xml")
@@ -75,7 +87,7 @@ func TestXmlMemHandlerFail(t *testing.T) {
 	}
 	defer xmlFilePass.Close()
 
-	inXml, _ := ioutil.ReadAll(xmlFilePass)
+	inXml, _ := io.ReadAll(xmlFilePass)
 
 	handler, err := NewXmlHandlerMem(inXml, ParsErrVerbose)
 	if err == nil {
@@ -87,7 +99,10 @@ func TestXmlMemHandlerFail(t *testing.T) {
 }
 
 func TestValidateWithXsdHandlerPass(t *testing.T) {
-	Init()
+	err := Init()
+	if err != nil {
+		panic(err)
+	}
 	defer Cleanup()
 
 	xsdhandler, err := NewXsdHandlerUrl("examples/test1_split.xsd", ParsErrDefault)
@@ -103,7 +118,7 @@ func TestValidateWithXsdHandlerPass(t *testing.T) {
 		return
 	}
 	defer xmlFile.Close()
-	inXml, _ := ioutil.ReadAll(xmlFile)
+	inXml, _ := io.ReadAll(xmlFile)
 
 	xmlhandler, err := NewXmlHandlerMem(inXml, ParsErrDefault)
 	if err != nil {
@@ -121,7 +136,10 @@ func TestValidateWithXsdHandlerPass(t *testing.T) {
 }
 
 func TestValidateWithXsdHandlerHttpPass(t *testing.T) {
-	Init()
+	err := Init()
+	if err != nil {
+		panic(err)
+	}
 	defer Cleanup()
 
 	xsdhandler, err := NewXsdHandlerUrl("http://schemas.opengis.net/cat/csw/3.0/cswAll.xsd", ParsErrDefault)
@@ -137,7 +155,7 @@ func TestValidateWithXsdHandlerHttpPass(t *testing.T) {
 		return
 	}
 	defer xmlFile.Close()
-	inXml, _ := ioutil.ReadAll(xmlFile)
+	inXml, _ := io.ReadAll(xmlFile)
 
 	xmlhandler, err := NewXmlHandlerMem(inXml, ParsErrVerbose)
 	if err != nil {
@@ -155,7 +173,10 @@ func TestValidateWithXsdHandlerHttpPass(t *testing.T) {
 }
 
 func TestValidateWithXsdHandlerFail(t *testing.T) {
-	Init()
+	err := Init()
+	if err != nil {
+		panic(err)
+	}
 	defer Cleanup()
 
 	xsdhandler, err := NewXsdHandlerUrl("examples/test1_split.xsd", ParsErrVerbose)
@@ -171,7 +192,7 @@ func TestValidateWithXsdHandlerFail(t *testing.T) {
 		return
 	}
 	defer xmlFile.Close()
-	inXml, _ := ioutil.ReadAll(xmlFile)
+	inXml, _ := io.ReadAll(xmlFile)
 
 	xmlhandler, err := NewXmlHandlerMem(inXml, ParsErrDefault)
 	if err != nil {
@@ -188,7 +209,10 @@ func TestValidateWithXsdHandlerFail(t *testing.T) {
 }
 
 func TestValidateMemWithXsdHandlerPass(t *testing.T) {
-	Init()
+	err := Init()
+	if err != nil {
+		panic(err)
+	}
 	defer Cleanup()
 
 	xsdhandler, err := NewXsdHandlerUrl("examples/test1_split.xsd", ParsErrDefault)
@@ -204,7 +228,7 @@ func TestValidateMemWithXsdHandlerPass(t *testing.T) {
 		return
 	}
 	defer xmlFile.Close()
-	inXml, _ := ioutil.ReadAll(xmlFile)
+	inXml, _ := io.ReadAll(xmlFile)
 
 	err = xsdhandler.ValidateMem(inXml, ParsErrDefault)
 	if err != nil {
@@ -215,7 +239,10 @@ func TestValidateMemWithXsdHandlerPass(t *testing.T) {
 }
 
 func TestValidateMemWithXsdHandlerFail(t *testing.T) {
-	Init()
+	err := Init()
+	if err != nil {
+		panic(err)
+	}
 	defer Cleanup()
 
 	xsdhandler, err := NewXsdHandlerUrl("examples/test1_split.xsd", ParsErrVerbose)
@@ -231,7 +258,7 @@ func TestValidateMemWithXsdHandlerFail(t *testing.T) {
 		return
 	}
 	defer xmlFile.Close()
-	inXml, _ := ioutil.ReadAll(xmlFile)
+	inXml, _ := io.ReadAll(xmlFile)
 
 	err = xsdhandler.ValidateMem(inXml, ParsErrDefault)
 	fmt.Printf("Error OK:\n %s %s\n", t.Name(), err.Error())

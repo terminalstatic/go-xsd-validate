@@ -2,17 +2,21 @@ package xsdvalidate_test
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 
-	"github.com/terminalstatic/go-xsd-validate"
+	xsdvalidate "github.com/form3tech-oss/go-xsd-validate"
 )
 
 // An example on how to use the package.
 // Init() is only required once before parsing and validating, and Cleanup() respectively when finished.
 func Example() {
-	xsdvalidate.Init()
+	err := xsdvalidate.Init()
+	if err != nil {
+		panic(err)
+	}
 	defer xsdvalidate.Cleanup()
+
 	xsdhandler, err := xsdvalidate.NewXsdHandlerUrl("examples/test1_split.xsd", xsdvalidate.ParsErrDefault)
 	if err != nil {
 		panic(err)
@@ -24,7 +28,7 @@ func Example() {
 		panic(err)
 	}
 	defer xmlFile.Close()
-	inXml, err := ioutil.ReadAll(xmlFile)
+	inXml, err := io.ReadAll(xmlFile)
 	if err != nil {
 		panic(err)
 	}
@@ -38,11 +42,11 @@ func Example() {
 
 	err = xsdhandler.Validate(xmlhandler, xsdvalidate.ValidErrDefault)
 	if err != nil {
-		switch err.(type) {
+		switch err := err.(type) {
 		case xsdvalidate.ValidationError:
 			fmt.Println(err)
-			fmt.Printf("Error in line: %d\n", err.(xsdvalidate.ValidationError).Errors[0].Line)
-			fmt.Println(err.(xsdvalidate.ValidationError).Errors[0].Message)
+			fmt.Printf("Error in line: %d\n", err.Errors[0].Line)
+			fmt.Println(err.Errors[0].Message)
 		default:
 			fmt.Println(err)
 		}
@@ -51,11 +55,11 @@ func Example() {
 	// Option 2:
 	err = xsdhandler.ValidateMem(inXml, xsdvalidate.ValidErrDefault)
 	if err != nil {
-		switch err.(type) {
+		switch err := err.(type) {
 		case xsdvalidate.ValidationError:
 			fmt.Println(err)
-			fmt.Printf("Error in line: %d\n", err.(xsdvalidate.ValidationError).Errors[0].Line)
-			fmt.Println(err.(xsdvalidate.ValidationError).Errors[0].Message)
+			fmt.Printf("Error in line: %d\n", err.Errors[0].Line)
+			fmt.Println(err.Errors[0].Message)
 		default:
 			fmt.Println(err)
 		}
