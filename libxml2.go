@@ -41,6 +41,7 @@ struct simpleXmlError {
     int level;
     int line;
     char* node;
+    char* path;
 };
 
 typedef struct _errArray {
@@ -65,6 +66,7 @@ static void freeErrArray(errArray* errArr) {
     for (int i = 0; i < errArr->len; i++) {
         free(errArr->data[i].message);
         free(errArr->data[i].node);
+        free(errArr->data[i].path);
     }
     free(errArr->data);
 }
@@ -147,6 +149,7 @@ static void simpleStructErrorCallback(void* ctx, xmlErrorPtr p) {
     struct simpleXmlError sErr;
     sErr.message = calloc(GO_ERR_INIT, sizeof(char));
     sErr.node = calloc(GO_ERR_INIT, sizeof(char));
+    sErr.path = calloc(GO_ERR_INIT, sizeof(char));
 
     sErr.type = VALIDATION_ERROR;
     sErr.code = p->code;
@@ -161,13 +164,64 @@ static void simpleStructErrorCallback(void* ctx, xmlErrorPtr p) {
     }
 
     if (p->node != NULL) {
-        cpyLen = 1 + snprintf(sErr.node, GO_ERR_INIT, "%s",
-                              (((xmlNodePtr)p->node)->name));
+        xmlNodePtr node = (xmlNodePtr)p->node;
+
+        cpyLen = 1 + snprintf(sErr.node, GO_ERR_INIT, "%s", node->name);
         if (cpyLen > GO_ERR_INIT) {
             free(sErr.node);
             sErr.node = malloc(cpyLen);
-            snprintf(sErr.node, cpyLen, "%s", (((xmlNodePtr)p->node)->name));
+            snprintf(sErr.node, cpyLen, "%s", node->name);
         }
+
+        int depth = 0;
+        while (node != NULL && node->name != NULL) {
+            depth++;
+            node = node->parent;
+        }
+
+        // reset to the current node, after counting the depth
+        node = (xmlNodePtr)p->node;
+
+        // array of node names to later join into a path
+        const char **nodeNames = calloc(depth, sizeof(char*));
+
+        // populate nodeNames, and calculate required string capacity
+        int nodeIndex = 0;
+        int pathLen = depth; // depth-1 separator chars, and one '\0'
+        while (node != NULL && node->name != NULL && nodeIndex < depth) {
+            nodeNames[nodeIndex] = node->name;
+            pathLen += strlen(node->name);
+            nodeIndex++;
+            node = node->parent;
+        }
+
+        // Reallocate if insufficient capacity
+        if (pathLen > GO_ERR_INIT) {
+            // free default allocated buffer
+            free(sErr.path);
+
+            // Round up to the smallest 32-byte multiple that contains the path
+            pathLen = ((pathLen / 32) + 1) * 32;
+            // calloc zeroes memory for returned pointer, sErr.path is initialized as an empty string
+            sErr.path = calloc(pathLen, sizeof(char));
+        }
+
+        // concatenate node names together as a path
+        char *pathDestPtr = sErr.path;
+        int limit = pathLen;
+        for (int i = depth - 1; i >= 0; i--) {
+            cpyLen = snprintf(pathDestPtr, limit, "%s", nodeNames[i]);
+            pathDestPtr = &pathDestPtr[cpyLen];
+
+            // if not the root node, add a separator character
+            if (i != 0) {
+                *pathDestPtr = '/';
+                pathDestPtr++;
+                limit -= (cpyLen + 1);
+            }
+        }
+
+        free(nodeNames);
     }
     if (sErrArr->len >= sErrArr->cap) {
         sErrArr->cap = sErrArr->cap * 2;
@@ -304,6 +358,7 @@ static errArray cValidate(const xmlDocPtr doc, const xmlSchemaPtr schema) {
     struct simpleXmlError simpleError;
     simpleError.message = calloc(GO_ERR_INIT, sizeof(char));
     simpleError.node = calloc(GO_ERR_INIT, sizeof(char));
+    simpleError.path = calloc(GO_ERR_INIT, sizeof(char));
 
     if (schema == NULL) {
         simpleError.type = LIBXML2_ERROR;
@@ -338,6 +393,7 @@ static errArray cValidate(const xmlDocPtr doc, const xmlSchemaPtr schema) {
             } else {
                 free(simpleError.node);
                 free(simpleError.message);
+                free(simpleError.path);
             }
         }
     }
@@ -357,6 +413,7 @@ static errArray cValidateBuf(const void* goXmlSource,
     struct simpleXmlError simpleError;
     simpleError.message = calloc(GO_ERR_INIT, sizeof(char));
     simpleError.node = calloc(GO_ERR_INIT, sizeof(char));
+    simpleError.path = calloc(GO_ERR_INIT, sizeof(char));
 
     struct xmlParserResult parserResult =
     cParseDoc(goXmlSource, goXmlSourceLen, xmlParserOptions);
@@ -387,6 +444,7 @@ static errArray cValidateBuf(const void* goXmlSource,
     }
     free(simpleError.node);
     free(simpleError.message);
+    free(simpleError.path);
     freeErrArray(&errArr);
     free(parserResult.errorStr);
 
@@ -476,7 +534,8 @@ func handleErrArray(errSlice []C.struct_simpleXmlError) ValidationError {
 			Message:  strings.Trim(C.GoString(errSlice[i].message), "\n"),
 			Level:    int(errSlice[i].level),
 			Line:     int(errSlice[i].line),
-			NodeName: C.GoString(errSlice[i].node)}
+			NodeName: C.GoString(errSlice[i].node),
+			Path:     C.GoString(errSlice[i].path)}
 	}
 	return ve
 

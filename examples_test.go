@@ -47,6 +47,7 @@ func Example() {
 			fmt.Println(err)
 			fmt.Printf("Error in line: %d\n", err.Errors[0].Line)
 			fmt.Println(err.Errors[0].Message)
+			fmt.Println(err.Errors[0].Path)
 		default:
 			fmt.Println(err)
 		}
@@ -60,6 +61,7 @@ func Example() {
 			fmt.Println(err)
 			fmt.Printf("Error in line: %d\n", err.Errors[0].Line)
 			fmt.Println(err.Errors[0].Message)
+			fmt.Println(err.Errors[0].Path)
 		default:
 			fmt.Println(err)
 		}
@@ -68,7 +70,9 @@ func Example() {
 	// 3: Element 'shipto': This element is not expected. Expected is ( orderperson ).
 	// Error in line: 3
 	// Element 'shipto': This element is not expected. Expected is ( orderperson ).
+	// shiporder/shipto
 	// 3: Element 'shipto': This element is not expected. Expected is ( orderperson ).
 	// Error in line: 3
 	// Element 'shipto': This element is not expected. Expected is ( orderperson ).
+	// shiporder/shipto
 }
