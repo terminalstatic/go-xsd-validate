@@ -68,6 +68,12 @@ func InitWithGc(d time.Duration) {
 }
 
 // Cleanup cleans up libxml2 memory and finishes gc goroutine when running.
+// It should only be called once at application exit. It calls `xmlCleanupParser`
+// under the hood, which has the following notes:
+//
+// > This function name is somewhat misleading. It does not clean up parser state, it cleans up memory allocated by the library itself.
+//
+// > In case of doubt abstain from calling this function or do it just before calling exit() to avoid leak reports from valgrind !
 func Cleanup() {
 	g.Lock()
 	defer g.Unlock()

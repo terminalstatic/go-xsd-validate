@@ -115,7 +115,6 @@ static void init() {
 }
 
 static void cleanup() {
-    xmlSchemaCleanupTypes();
     xmlCleanupParser();
 }
 
