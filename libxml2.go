@@ -303,7 +303,6 @@ static struct xmlParserResult cParseDoc(const void* goXmlSource,
     errCtx ectx = initErrCtx(1, GO_ERR_INIT);
 
     xmlDocPtr doc = NULL;
-    xmlParserCtxtPtr xmlParserCtxt = NULL;
 
     if (goXmlSourceLen == 0) {
         err = true;
@@ -315,28 +314,19 @@ static struct xmlParserResult cParseDoc(const void* goXmlSource,
             appendErrCtxErrBuff(&ectx, msg);
         }
     } else {
-        xmlParserCtxt = xmlNewParserCtxt();
-
-        if (xmlParserCtxt == NULL) {
-            err = true;
-            const char msg[] = "Xml parser internal error";
-            appendErrCtxErrBuff(&ectx, msg);
+        if (options & P_ERR_VERBOSE) {
+            xmlSetGenericErrorFunc(&ectx, genErrorCallback);
         } else {
-            if (options & P_ERR_VERBOSE) {
-                xmlSetGenericErrorFunc(&ectx, genErrorCallback);
-            } else {
-                xmlSetGenericErrorFunc(NULL, noOutputCallback);
-            }
+            xmlSetGenericErrorFunc(NULL, noOutputCallback);
+        }
 
-            doc = xmlParseMemory(goXmlSource, goXmlSourceLen);
+        doc = xmlParseMemory(goXmlSource, goXmlSourceLen);
 
-            xmlFreeParserCtxt(xmlParserCtxt);
-            if (doc == NULL) {
-                err = true;
-                if (!(options & P_ERR_VERBOSE)) {
-                    const char msg[] = "Malformed xml document";
-                    appendErrCtxErrBuff(&ectx, msg);
-                }
+        if (doc == NULL) {
+            err = true;
+            if (!(options & P_ERR_VERBOSE)) {
+                const char msg[] = "Malformed xml document";
+                appendErrCtxErrBuff(&ectx, msg);
             }
         }
     }
@@ -354,10 +344,11 @@ static errArray cValidate(const xmlDocPtr doc, const xmlSchemaPtr schema) {
 
     errArray errArr = initErrArray();
 
-    struct simpleXmlError simpleError;
-    simpleError.message = calloc(GO_ERR_INIT, sizeof(char));
-    simpleError.node = calloc(GO_ERR_INIT, sizeof(char));
-    simpleError.path = calloc(GO_ERR_INIT, sizeof(char));
+    struct simpleXmlError simpleError = {
+       .message = calloc(GO_ERR_INIT, sizeof(char)),
+       .node = calloc(GO_ERR_INIT, sizeof(char)),
+       .path = calloc(GO_ERR_INIT, sizeof(char)),
+    };
 
     if (schema == NULL) {
         simpleError.type = LIBXML2_ERROR;
@@ -409,10 +400,11 @@ static errArray cValidateBuf(const void* goXmlSource,
 
     errArray errArr = initErrArray();
 
-    struct simpleXmlError simpleError;
-    simpleError.message = calloc(GO_ERR_INIT, sizeof(char));
-    simpleError.node = calloc(GO_ERR_INIT, sizeof(char));
-    simpleError.path = calloc(GO_ERR_INIT, sizeof(char));
+    struct simpleXmlError simpleError = {
+       .message = calloc(GO_ERR_INIT, sizeof(char)),
+       .node = calloc(GO_ERR_INIT, sizeof(char)),
+       .path = calloc(GO_ERR_INIT, sizeof(char)),
+    };
 
     struct xmlParserResult parserResult =
     cParseDoc(goXmlSource, goXmlSourceLen, xmlParserOptions);
