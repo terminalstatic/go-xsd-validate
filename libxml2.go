@@ -182,14 +182,14 @@ static void simpleStructErrorCallback(void* ctx, xmlErrorPtr p) {
         node = (xmlNodePtr)p->node;
 
         // array of node names to later join into a path
-        const char **nodeNames = calloc(depth, sizeof(char*));
+        const unsigned char **nodeNames = calloc(depth, sizeof(unsigned char*));
 
         // populate nodeNames, and calculate required string capacity
         int nodeIndex = 0;
         int pathLen = depth; // depth-1 separator chars, and one '\0'
         while (node != NULL && node->name != NULL && nodeIndex < depth) {
             nodeNames[nodeIndex] = node->name;
-            pathLen += strlen(node->name);
+            pathLen += strlen((const char *)node->name); // It's safe to cast here to const char * in context of strlen
             nodeIndex++;
             node = node->parent;
         }
