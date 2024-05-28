@@ -141,7 +141,14 @@ static void genErrorCallback(void* ctx, const char* message, ...) {
     free(newLine);
 }
 
-static void simpleStructErrorCallback(void* ctx, xmlErrorPtr p) {
+static void simpleStructErrorCallback(
+    void* ctx,
+#if LIBXML_VERSION >= 21200
+    const xmlError *p
+#else
+    xmlErrorPtr p
+#endif
+) {
     errArray* sErrArr = ctx;
 
     struct simpleXmlError sErr;
