@@ -113,7 +113,9 @@ static void init() {
 }
 
 static void cleanup() {
+#if LIBXML_VERSION < 21000
     xmlSchemaCleanupTypes();
+#endif
     xmlCleanupParser();
 }
 
