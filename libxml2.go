@@ -192,7 +192,6 @@ static void simpleStructErrorCallback(
 static struct xsdParserResult parseSchema(
                                           xmlSchemaParserCtxtPtr schemaParserCtxt,
                                           const short int options) {
-    xmlLineNumbersDefault(1);
     bool err = false;
     struct xsdParserResult parserResult;
     errCtx ectx = initErrCtx(1, GO_ERR_INIT);
@@ -253,7 +252,6 @@ static struct xsdParserResult cParseMemSchema(const void* xsd,
 static struct xmlParserResult cParseDoc(const void* goXmlSource,
                                         const int goXmlSourceLen,
                                         const short int options) {
-    xmlLineNumbersDefault(1);
     bool err = false;
     struct xmlParserResult parserResult;
     errCtx ectx = initErrCtx(1, GO_ERR_INIT);
@@ -284,7 +282,7 @@ static struct xmlParserResult cParseDoc(const void* goXmlSource,
                 xmlSetGenericErrorFunc(NULL, noOutputCallback);
             }
 
-            doc = xmlParseMemory(goXmlSource, goXmlSourceLen);
+            doc = xmlReadMemory(goXmlSource, goXmlSourceLen, NULL, NULL, 0);
 
             xmlFreeParserCtxt(xmlParserCtxt);
             if (doc == NULL) {
@@ -306,8 +304,6 @@ static struct xmlParserResult cParseDoc(const void* goXmlSource,
 }
 
 static errArray cValidate(const xmlDocPtr doc, const xmlSchemaPtr schema) {
-    xmlLineNumbersDefault(1);
-
     errArray errArr = initErrArray();
 
     struct simpleXmlError simpleError;
@@ -359,8 +355,6 @@ static errArray cValidateBuf(const void* goXmlSource,
                              const int goXmlSourceLen,
                              const short int xmlParserOptions,
                              const xmlSchemaPtr schema) {
-    xmlLineNumbersDefault(1);
-
     errArray errArr = initErrArray();
 
     struct simpleXmlError simpleError;
