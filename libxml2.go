@@ -485,8 +485,13 @@ func handleErrArray(errSlice []C.struct_simpleXmlError) ValidationError {
 
 }
 
-func simpleXmlErrorSlice(errArr C.errArray) []C.struct_simpleXmlError {
-	return unsafe.Slice(errArr.data, errArr.len)
+const maxSimpleXmlErrors = 1 << 20
+
+func simpleXmlErrorSlice(errArr C.errArray) ([]C.struct_simpleXmlError, error) {
+	if errArr.len > maxSimpleXmlErrors {
+		return nil, Libxml2Error{errorMessage{"too many validation errors"}}
+	}
+	return unsafe.Slice(errArr.data, errArr.len), nil
 }
 
 // Helper function for validating given an xml document
@@ -494,7 +499,10 @@ func validateWithXsd(xmlHandler *XmlHandler, xsdHandler *XsdHandler) error {
 	sErr, err := C.cValidate(xmlHandler.docPtr, xsdHandler.schemaPtr)
 	defer C.freeErrArray(&sErr)
 	if err != nil {
-		errSlice := simpleXmlErrorSlice(sErr)
+		errSlice, sliceErr := simpleXmlErrorSlice(sErr)
+		if sliceErr != nil {
+			return sliceErr
+		}
 		return handleErrArray(errSlice)
 	}
 	return nil
@@ -507,7 +515,10 @@ func validateBufWithXsd(inXml []byte, options Options, xsdHandler *XsdHandler) e
 	sErr, err := C.cValidateBuf(strXml, C.int(len(inXml)), C.short(options), xsdHandler.schemaPtr)
 	defer C.freeErrArray(&sErr)
 	if err != nil {
-		errSlice := simpleXmlErrorSlice(sErr)
+		errSlice, sliceErr := simpleXmlErrorSlice(sErr)
+		if sliceErr != nil {
+			return sliceErr
+		}
 		switch errSlice[0]._type {
 		case C.VALIDATION_ERROR:
 			return handleErrArray(errSlice)
