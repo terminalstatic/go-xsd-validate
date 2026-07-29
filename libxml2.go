@@ -538,15 +538,17 @@ func validateBufWithXsd(inXml []byte, options Options, xsdHandler *XsdHandler) e
 
 // Wrapper for the xmlSchemaFree function
 func freeSchemaPtr(xsdHandler *XsdHandler) {
-	if xsdHandler.schemaPtr != nil {
+	if xsdHandler != nil && xsdHandler.schemaPtr != nil {
 		C.xmlSchemaFree(xsdHandler.schemaPtr)
+		xsdHandler.schemaPtr = nil
 	}
 }
 
 // Wrapper for the xmlFreeDoc function
 func freeDocPtr(xmlHandler *XmlHandler) {
-	if xmlHandler.docPtr != nil {
+	if xmlHandler != nil && xmlHandler.docPtr != nil {
 		C.xmlFreeDoc(xmlHandler.docPtr)
+		xmlHandler.docPtr = nil
 	}
 }
 
