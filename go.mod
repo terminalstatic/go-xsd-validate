@@ -1,3 +1,3 @@
 module github.com/terminalstatic/go-xsd-validate
 
-go 1.16
+go 1.17

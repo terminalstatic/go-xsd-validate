@@ -485,12 +485,16 @@ func handleErrArray(errSlice []C.struct_simpleXmlError) ValidationError {
 
 }
 
+func simpleXmlErrorSlice(errArr C.errArray) []C.struct_simpleXmlError {
+	return unsafe.Slice(errArr.data, errArr.len)
+}
+
 // Helper function for validating given an xml document
 func validateWithXsd(xmlHandler *XmlHandler, xsdHandler *XsdHandler) error {
 	sErr, err := C.cValidate(xmlHandler.docPtr, xsdHandler.schemaPtr)
 	defer C.freeErrArray(&sErr)
 	if err != nil {
-		errSlice := (*[1 << 30]C.struct_simpleXmlError)(unsafe.Pointer(sErr.data))[:sErr.len:sErr.len]
+		errSlice := simpleXmlErrorSlice(sErr)
 		return handleErrArray(errSlice)
 	}
 	return nil
@@ -503,7 +507,7 @@ func validateBufWithXsd(inXml []byte, options Options, xsdHandler *XsdHandler) e
 	sErr, err := C.cValidateBuf(strXml, C.int(len(inXml)), C.short(options), xsdHandler.schemaPtr)
 	defer C.freeErrArray(&sErr)
 	if err != nil {
-		errSlice := (*[1 << 30]C.struct_simpleXmlError)(unsafe.Pointer(sErr.data))[:sErr.len:sErr.len]
+		errSlice := simpleXmlErrorSlice(sErr)
 		switch errSlice[0]._type {
 		case C.VALIDATION_ERROR:
 			return handleErrArray(errSlice)
