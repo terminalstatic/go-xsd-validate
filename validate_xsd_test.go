@@ -185,6 +185,13 @@ func TestValidateWithXsdHandlerFail(t *testing.T) {
 	if err == nil {
 		t.Fail()
 	}
+	if validationErr, ok := err.(ValidationError); ok {
+		if len(validationErr.Errors) == 0 || validationErr.Errors[0].NodePath == "" {
+			t.Fatalf("expected validation error node path, got %#v", validationErr.Errors)
+		}
+	} else {
+		t.Fatalf("expected ValidationError, got %T", err)
+	}
 }
 
 func TestValidateMemWithXsdHandlerPass(t *testing.T) {

@@ -41,6 +41,7 @@ struct simpleXmlError {
     int level;
     int line;
     char* node;
+    char* nodePath;
 };
 
 typedef struct _errArray {
@@ -61,10 +62,30 @@ static errArray initErrArray() {
     return errArr;
 }
 
+static char* copyStringOrEmpty(const char* src) {
+    if (src == NULL) {
+        src = "";
+    }
+
+    size_t len = strlen(src) + 1;
+    char* dst = malloc(len);
+    if (dst == NULL) {
+        return NULL;
+    }
+
+    memcpy(dst, src, len);
+    return dst;
+}
+
+static void freeSimpleXmlError(struct simpleXmlError* sErr) {
+    free(sErr->message);
+    free(sErr->node);
+    free(sErr->nodePath);
+}
+
 static void freeErrArray(errArray* errArr) {
     for (int i = 0; i < errArr->len; i++) {
-        free(errArr->data[i].message);
-        free(errArr->data[i].node);
+        freeSimpleXmlError(&errArr->data[i]);
     }
     free(errArr->data);
 }
@@ -151,39 +172,69 @@ static void simpleStructErrorCallback(
     xmlErrorPtr p
 #endif
 ) {
-    errArray* sErrArr = ctx;
+    if (p == NULL) {
+        return;
+    }
 
-    struct simpleXmlError sErr;
-    sErr.message = calloc(GO_ERR_INIT, sizeof(char));
-    sErr.node = calloc(GO_ERR_INIT, sizeof(char));
+    errArray* sErrArr = ctx;
+    if (sErrArr == NULL) {
+        return;
+    }
+
+    struct simpleXmlError sErr = {0};
+    sErr.message = copyStringOrEmpty(p->message);
+    sErr.node = copyStringOrEmpty(NULL);
+    sErr.nodePath = copyStringOrEmpty(NULL);
+    if (sErr.message == NULL || sErr.node == NULL || sErr.nodePath == NULL) {
+        freeSimpleXmlError(&sErr);
+        return;
+    }
 
     sErr.type = VALIDATION_ERROR;
     sErr.code = p->code;
     sErr.level = p->level;
     sErr.line = p->line;
 
-    int cpyLen = 1 + snprintf(sErr.message, GO_ERR_INIT, "%s", p->message);
-    if (cpyLen > GO_ERR_INIT) {
-        free(sErr.message);
-        sErr.message = malloc(cpyLen);
-        snprintf(sErr.message, cpyLen, "%s", p->message);
-    }
-
     if (p->node != NULL) {
-        cpyLen = 1 + snprintf(sErr.node, GO_ERR_INIT, "%s",
-                              (((xmlNodePtr)p->node)->name));
-        if (cpyLen > GO_ERR_INIT) {
+        const xmlChar* nodeName = ((xmlNodePtr)p->node)->name;
+        if (nodeName != NULL) {
+            char* node = copyStringOrEmpty((const char*)nodeName);
+            if (node == NULL) {
+                freeSimpleXmlError(&sErr);
+                return;
+            }
             free(sErr.node);
-            sErr.node = malloc(cpyLen);
-            snprintf(sErr.node, cpyLen, "%s", (((xmlNodePtr)p->node)->name));
+            sErr.node = node;
+        }
+
+        xmlChar* nodePath = xmlGetNodePath((xmlNodePtr)p->node);
+        if (nodePath != NULL) {
+            char* nodePathCopy = copyStringOrEmpty((const char*)nodePath);
+            xmlFree(nodePath);
+            if (nodePathCopy == NULL) {
+                freeSimpleXmlError(&sErr);
+                return;
+            }
+            free(sErr.nodePath);
+            sErr.nodePath = nodePathCopy;
         }
     }
     if (sErrArr->len >= sErrArr->cap) {
-        sErrArr->cap = sErrArr->cap * 2;
-        struct simpleXmlError* tmp = calloc(sErrArr->cap, sizeof(*tmp));
+        size_t newCap = sErrArr->cap * 2;
+        if (newCap <= sErrArr->cap) {
+            freeSimpleXmlError(&sErr);
+            return;
+        }
+
+        struct simpleXmlError* tmp = calloc(newCap, sizeof(*tmp));
+        if (tmp == NULL) {
+            freeSimpleXmlError(&sErr);
+            return;
+        }
         memcpy(tmp, sErrArr->data, sErrArr->len * sizeof(*tmp));
         free(sErrArr->data);
         sErrArr->data = tmp;
+        sErrArr->cap = newCap;
     }
     sErrArr->data[sErrArr->len] = sErr;
     sErrArr->len++;
@@ -309,6 +360,7 @@ static errArray cValidate(const xmlDocPtr doc, const xmlSchemaPtr schema) {
     struct simpleXmlError simpleError;
     simpleError.message = calloc(GO_ERR_INIT, sizeof(char));
     simpleError.node = calloc(GO_ERR_INIT, sizeof(char));
+    simpleError.nodePath = calloc(GO_ERR_INIT, sizeof(char));
 
     if (schema == NULL) {
         simpleError.type = LIBXML2_ERROR;
@@ -341,8 +393,7 @@ static errArray cValidate(const xmlDocPtr doc, const xmlSchemaPtr schema) {
                 errArr.data[errArr.len] = simpleError;
                 errArr.len++;
             } else {
-                free(simpleError.node);
-                free(simpleError.message);
+                freeSimpleXmlError(&simpleError);
             }
         }
     }
@@ -360,6 +411,7 @@ static errArray cValidateBuf(const void* goXmlSource,
     struct simpleXmlError simpleError;
     simpleError.message = calloc(GO_ERR_INIT, sizeof(char));
     simpleError.node = calloc(GO_ERR_INIT, sizeof(char));
+    simpleError.nodePath = calloc(GO_ERR_INIT, sizeof(char));
 
     struct xmlParserResult parserResult =
     cParseDoc(goXmlSource, goXmlSourceLen, xmlParserOptions);
@@ -388,8 +440,7 @@ static errArray cValidateBuf(const void* goXmlSource,
         errno = -1;
         return errArr;
     }
-    free(simpleError.node);
-    free(simpleError.message);
+    freeSimpleXmlError(&simpleError);
     freeErrArray(&errArr);
     free(parserResult.errorStr);
 
@@ -479,7 +530,8 @@ func handleErrArray(errSlice []C.struct_simpleXmlError) ValidationError {
 			Message:  strings.Trim(C.GoString(errSlice[i].message), "\n"),
 			Level:    int(errSlice[i].level),
 			Line:     int(errSlice[i].line),
-			NodeName: C.GoString(errSlice[i].node)}
+			NodeName: C.GoString(errSlice[i].node),
+			NodePath: C.GoString(errSlice[i].nodePath)}
 	}
 	return ve
 
