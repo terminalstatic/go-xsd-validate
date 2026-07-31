@@ -37,11 +37,17 @@ type XsdParserError struct {
 
 // StructError is a subset of libxml2 xmlError struct.
 type StructError struct {
-	Code     int
-	Message  string
-	Level    int
-	Line     int
+	// Code is the libxml2 error code.
+	Code int
+	// Message is the validation error message returned by libxml2.
+	Message string
+	// Level is the libxml2 error level.
+	Level int
+	// Line is the line number associated with the validation error.
+	Line int
+	// NodeName is the XML node name associated with the validation error.
 	NodeName string
+	// NodePath is the XPath-style path to the XML node associated with the validation error.
 	NodePath string
 }
 
