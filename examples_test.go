@@ -68,3 +68,34 @@ func Example() {
 	// Error in line: 3
 	// Element 'shipto': This element is not expected. Expected is ( orderperson ).
 }
+
+func ExampleValidationError_nodePath() {
+	xsdvalidate.Init()
+	defer xsdvalidate.Cleanup()
+
+	xsdhandler, err := xsdvalidate.NewXsdHandlerUrl("testdata/nodepath.xsd", xsdvalidate.ParsErrDefault)
+	if err != nil {
+		panic(err)
+	}
+	defer xsdhandler.Free()
+
+	xmlFile, err := os.Open("testdata/nodepath_bad_nested_value.xml")
+	if err != nil {
+		panic(err)
+	}
+	defer xmlFile.Close()
+	inXml, err := ioutil.ReadAll(xmlFile)
+	if err != nil {
+		panic(err)
+	}
+
+	err = xsdhandler.ValidateMem(inXml, xsdvalidate.ValidErrDefault)
+	if validationErr, ok := err.(xsdvalidate.ValidationError); ok {
+		fmt.Println(validationErr.Errors[0].NodePath)
+		fmt.Println(validationErr.Errors[0].Line)
+	}
+
+	// Output:
+	// /order/items/item/quantity
+	// 6
+}

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -192,6 +193,152 @@ func TestValidateWithXsdHandlerFail(t *testing.T) {
 	} else {
 		t.Fatalf("expected ValidationError, got %T", err)
 	}
+}
+
+func TestValidateWithXsdHandlerNodePath(t *testing.T) {
+	Init()
+	defer Cleanup()
+
+	xsdhandler, err := NewXsdHandlerUrl("testdata/nodepath.xsd", ParsErrVerbose)
+	if err != nil {
+		t.Fatalf("failed to parse schema: %v", err)
+	}
+	defer xsdhandler.Free()
+
+	inXml := readTestFile(t, "testdata/nodepath_bad_nested_value.xml")
+	xmlhandler, err := NewXmlHandlerMem(inXml, ParsErrDefault)
+	if err != nil {
+		t.Fatalf("failed to parse xml: %v", err)
+	}
+	defer xmlhandler.Free()
+
+	err = xsdhandler.Validate(xmlhandler, ValidErrDefault)
+	validationErr := requireValidationError(t, err)
+	requireStructError(t, validationErr, StructError{
+		Line:     6,
+		NodeName: "quantity",
+		NodePath: "/order/items/item/quantity",
+		Message:  "'many' is not a valid value",
+	})
+}
+
+func TestValidateMemWithXsdHandlerNodePath(t *testing.T) {
+	Init()
+	defer Cleanup()
+
+	xsdhandler, err := NewXsdHandlerUrl("testdata/nodepath.xsd", ParsErrVerbose)
+	if err != nil {
+		t.Fatalf("failed to parse schema: %v", err)
+	}
+	defer xsdhandler.Free()
+
+	tests := []struct {
+		name string
+		file string
+		want StructError
+	}{
+		{
+			name: "missing child",
+			file: "testdata/nodepath_missing_child.xml",
+			want: StructError{
+				Line:     3,
+				NodeName: "items",
+				NodePath: "/order/items",
+				Message:  "This element is not expected. Expected is ( customer )",
+			},
+		},
+		{
+			name: "nested value",
+			file: "testdata/nodepath_bad_nested_value.xml",
+			want: StructError{
+				Line:     6,
+				NodeName: "quantity",
+				NodePath: "/order/items/item/quantity",
+				Message:  "'many' is not a valid value",
+			},
+		},
+		{
+			name: "attribute",
+			file: "testdata/nodepath_bad_attribute.xml",
+			want: StructError{
+				Line:     2,
+				NodeName: "order",
+				NodePath: "/order",
+				Message:  "'bad-id' is not a valid value",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := xsdhandler.ValidateMem(readTestFile(t, tt.file), ParsErrDefault)
+			validationErr := requireValidationError(t, err)
+			requireStructError(t, validationErr, tt.want)
+		})
+	}
+}
+
+func TestValidateMemWithXsdHandlerMultipleNodePaths(t *testing.T) {
+	Init()
+	defer Cleanup()
+
+	xsdhandler, err := NewXsdHandlerUrl("testdata/nodepath.xsd", ParsErrVerbose)
+	if err != nil {
+		t.Fatalf("failed to parse schema: %v", err)
+	}
+	defer xsdhandler.Free()
+
+	err = xsdhandler.ValidateMem(readTestFile(t, "testdata/nodepath_multiple_errors.xml"), ParsErrDefault)
+	validationErr := requireValidationError(t, err)
+	requireStructError(t, validationErr, StructError{
+		Line:     2,
+		NodeName: "order",
+		NodePath: "/order",
+		Message:  "'bad-id' is not a valid value",
+	})
+	requireStructError(t, validationErr, StructError{
+		Line:     6,
+		NodeName: "quantity",
+		NodePath: "/order/items/item/quantity",
+		Message:  "'many' is not a valid value",
+	})
+}
+
+func readTestFile(t *testing.T, path string) []byte {
+	t.Helper()
+
+	in, err := ioutil.ReadFile(path)
+	if err != nil {
+		t.Fatalf("failed to read %s: %v", path, err)
+	}
+	return in
+}
+
+func requireValidationError(t *testing.T, err error) ValidationError {
+	t.Helper()
+
+	if err == nil {
+		t.Fatal("expected validation error")
+	}
+	validationErr, ok := err.(ValidationError)
+	if !ok {
+		t.Fatalf("expected ValidationError, got %T", err)
+	}
+	if len(validationErr.Errors) == 0 {
+		t.Fatal("expected at least one structured validation error")
+	}
+	return validationErr
+}
+
+func requireStructError(t *testing.T, validationErr ValidationError, want StructError) {
+	t.Helper()
+
+	for _, got := range validationErr.Errors {
+		if got.Line == want.Line && got.NodeName == want.NodeName && got.NodePath == want.NodePath && strings.Contains(got.Message, want.Message) {
+			return
+		}
+	}
+	t.Fatalf("expected validation error matching %#v, got %#v", want, validationErr.Errors)
 }
 
 func TestValidateMemWithXsdHandlerPass(t *testing.T) {

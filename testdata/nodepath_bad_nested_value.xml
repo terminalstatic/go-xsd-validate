@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<order id="1001">
+	<customer>Ada</customer>
+	<items>
+		<item>
+			<quantity>many</quantity>
+			<sku>ABC-123</sku>
+		</item>
+	</items>
+</order>
