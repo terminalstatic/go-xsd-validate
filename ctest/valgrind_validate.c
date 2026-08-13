@@ -96,6 +96,58 @@ static xmlDocPtr parseDoc(const char* path) {
     return doc.docPtr;
 }
 
+static void testParseUrlSchemaFail(void) {
+    struct xsdParserResult schema = xsdValidateParseUrlSchema("testdata/does-not-exist.xsd", P_ERR_DEFAULT);
+    if (schema.schemaPtr != NULL) {
+        xmlSchemaFree(schema.schemaPtr);
+        free(schema.errorStr);
+        fail("expected missing schema URL parse to fail");
+    }
+    free(schema.errorStr);
+}
+
+static void testParseMemSchema(void) {
+    int len = 0;
+    char* xsd = readFile("testdata/nodepath.xsd", &len);
+    struct xsdParserResult schema = xsdValidateParseMemSchema(xsd, len, P_ERR_DEFAULT);
+    free(xsd);
+    if (schema.schemaPtr == NULL) {
+        fprintf(stderr, "memory schema parse failed: %s\n", schema.errorStr == NULL ? "" : schema.errorStr);
+        free(schema.errorStr);
+        exit(1);
+    }
+    xmlSchemaFree(schema.schemaPtr);
+    free(schema.errorStr);
+
+    const char badXsd[] = "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\"><xs:element name=\"broken\"";
+    schema = xsdValidateParseMemSchema(badXsd, (int)strlen(badXsd), P_ERR_DEFAULT);
+    if (schema.schemaPtr != NULL) {
+        xmlSchemaFree(schema.schemaPtr);
+        free(schema.errorStr);
+        fail("expected malformed memory schema parse to fail");
+    }
+    free(schema.errorStr);
+}
+
+static void testParseDocFailures(void) {
+    const char malformedXml[] = "<order>";
+    struct xmlParserResult doc = xsdValidateParseDoc(malformedXml, (int)strlen(malformedXml), P_ERR_DEFAULT);
+    if (doc.docPtr != NULL) {
+        xmlFreeDoc(doc.docPtr);
+        free(doc.errorStr);
+        fail("expected direct malformed XML parse to fail");
+    }
+    free(doc.errorStr);
+
+    doc = xsdValidateParseDoc("", 0, P_ERR_DEFAULT);
+    if (doc.docPtr != NULL) {
+        xmlFreeDoc(doc.docPtr);
+        free(doc.errorStr);
+        fail("expected direct empty XML parse to fail");
+    }
+    free(doc.errorStr);
+}
+
 static void testValidateDocPass(xmlSchemaPtr schema) {
     xmlDocPtr doc = parseDoc("testdata/nodepath_valid.xml");
     errArray errArr = xsdValidateDoc(doc, schema);
@@ -106,6 +158,19 @@ static void testValidateDocPass(xmlSchemaPtr schema) {
     }
     xsdValidateFreeErrArray(&errArr);
     xmlFreeDoc(doc);
+}
+
+static void testValidateBufPass(xmlSchemaPtr schema) {
+    int len = 0;
+    char* xml = readFile("testdata/nodepath_valid.xml", &len);
+    errArray errArr = xsdValidateBuf(xml, len, P_ERR_DEFAULT, schema);
+    free(xml);
+
+    if (errArr.len != 0) {
+        xsdValidateFreeErrArray(&errArr);
+        fail("expected valid buffer to produce no validation errors");
+    }
+    xsdValidateFreeErrArray(&errArr);
 }
 
 static void testValidateBufNodePath(xmlSchemaPtr schema) {
@@ -207,6 +272,20 @@ static void testMalformedXml(xmlSchemaPtr schema) {
     errArray errArr = xsdValidateBuf(xml, (int)strlen(xml), P_ERR_DEFAULT, schema);
     requireErrArrayType(&errArr, XML_PARSER_ERROR);
     xsdValidateFreeErrArray(&errArr);
+
+    errArr = xsdValidateBuf("", 0, P_ERR_DEFAULT, schema);
+    requireErrArrayType(&errArr, XML_PARSER_ERROR);
+    xsdValidateFreeErrArray(&errArr);
+}
+
+static void testValidateBufNullSchema(void) {
+    int len = 0;
+    char* xml = readFile("testdata/nodepath_valid.xml", &len);
+    errArray errArr = xsdValidateBuf(xml, len, P_ERR_DEFAULT, NULL);
+    free(xml);
+
+    requireErrArrayType(&errArr, LIBXML2_ERROR);
+    xsdValidateFreeErrArray(&errArr);
 }
 
 static void testNullBranches(xmlSchemaPtr schema) {
@@ -239,11 +318,17 @@ static void testRepeatedValidation(xmlSchemaPtr schema) {
 int main(void) {
     xsdValidateInit();
 
+    testParseUrlSchemaFail();
+    testParseMemSchema();
+    testParseDocFailures();
+
     xmlSchemaPtr schema = parseSchema();
     testValidateDocPass(schema);
+    testValidateBufPass(schema);
     testValidateBufNodePath(schema);
     testValidateBufMultipleErrors(schema);
     testMalformedXml(schema);
+    testValidateBufNullSchema();
     testParseHugeXml();
     testNullBranches(schema);
     testRepeatedValidation(schema);

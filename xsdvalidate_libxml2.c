@@ -17,8 +17,7 @@ typedef struct _errCtx {
 } errCtx;
 
 static errArray initErrArray(void) {
-    errArray errArr = {
-        .data = calloc(2, sizeof(struct simpleXmlError)), .len = 0, .cap = 2};
+    errArray errArr = {.data = NULL, .len = 0, .cap = 0};
     return errArr;
 }
 
@@ -41,6 +40,47 @@ static void freeSimpleXmlError(struct simpleXmlError* sErr) {
     free(sErr->message);
     free(sErr->node);
     free(sErr->nodePath);
+}
+
+static bool ensureErrArrayCap(errArray* errArr) {
+    if (errArr->len < errArr->cap) {
+        return true;
+    }
+
+    size_t newCap = errArr->cap == 0 ? 2 : errArr->cap * 2;
+    if (newCap <= errArr->cap) {
+        return false;
+    }
+
+    struct simpleXmlError* tmp = calloc(newCap, sizeof(*tmp));
+    if (tmp == NULL) {
+        return false;
+    }
+    if (errArr->data != NULL) {
+        memcpy(tmp, errArr->data, errArr->len * sizeof(*tmp));
+        free(errArr->data);
+    }
+    errArr->data = tmp;
+    errArr->cap = newCap;
+    return true;
+}
+
+static bool appendSimpleXmlError(errArray* errArr, struct simpleXmlError sErr) {
+    if (!ensureErrArrayCap(errArr)) {
+        return false;
+    }
+    errArr->data[errArr->len] = sErr;
+    errArr->len++;
+    return true;
+}
+
+static struct simpleXmlError newSimpleXmlError(errorType type, const char* message) {
+    struct simpleXmlError simpleError = {0};
+    simpleError.type = type;
+    simpleError.message = copyStringOrEmpty(message);
+    simpleError.node = copyStringOrEmpty(NULL);
+    simpleError.nodePath = copyStringOrEmpty(NULL);
+    return simpleError;
 }
 
 void xsdValidateFreeErrArray(errArray* errArr) {
@@ -178,25 +218,9 @@ static void simpleStructErrorCallback(
             sErr.nodePath = nodePathCopy;
         }
     }
-    if (sErrArr->len >= sErrArr->cap) {
-        size_t newCap = sErrArr->cap * 2;
-        if (newCap <= sErrArr->cap) {
-            freeSimpleXmlError(&sErr);
-            return;
-        }
-
-        struct simpleXmlError* tmp = calloc(newCap, sizeof(*tmp));
-        if (tmp == NULL) {
-            freeSimpleXmlError(&sErr);
-            return;
-        }
-        memcpy(tmp, sErrArr->data, sErrArr->len * sizeof(*tmp));
-        free(sErrArr->data);
-        sErrArr->data = tmp;
-        sErrArr->cap = newCap;
+    if (!appendSimpleXmlError(sErrArr, sErr)) {
+        freeSimpleXmlError(&sErr);
     }
-    sErrArr->data[sErrArr->len] = sErr;
-    sErrArr->len++;
 }
 
 static struct xsdParserResult parseSchema(
@@ -327,30 +351,28 @@ struct xmlParserResult xsdValidateParseDoc(const void* goXmlSource,
 errArray xsdValidateDoc(const xmlDocPtr doc, const xmlSchemaPtr schema) {
     errArray errArr = initErrArray();
 
-    struct simpleXmlError simpleError;
-    simpleError.message = calloc(GO_ERR_INIT, sizeof(char));
-    simpleError.node = calloc(GO_ERR_INIT, sizeof(char));
-    simpleError.nodePath = calloc(GO_ERR_INIT, sizeof(char));
-
     if (schema == NULL) {
-        simpleError.type = LIBXML2_ERROR;
-        strcpy(simpleError.message, "Xsd schema null pointer");
-        errArr.data[errArr.len] = simpleError;
-        errArr.len++;
+        struct simpleXmlError simpleError = newSimpleXmlError(LIBXML2_ERROR, "Xsd schema null pointer");
+        if (simpleError.message == NULL || simpleError.node == NULL || simpleError.nodePath == NULL ||
+            !appendSimpleXmlError(&errArr, simpleError)) {
+            freeSimpleXmlError(&simpleError);
+        }
     } else if (doc == NULL) {
-        simpleError.type = LIBXML2_ERROR;
-        strcpy(simpleError.message, "Xml doc null pointer");
-        errArr.data[errArr.len] = simpleError;
-        errArr.len++;
+        struct simpleXmlError simpleError = newSimpleXmlError(LIBXML2_ERROR, "Xml doc null pointer");
+        if (simpleError.message == NULL || simpleError.node == NULL || simpleError.nodePath == NULL ||
+            !appendSimpleXmlError(&errArr, simpleError)) {
+            freeSimpleXmlError(&simpleError);
+        }
     } else {
         xmlSchemaValidCtxtPtr schemaCtxt;
         schemaCtxt = xmlSchemaNewValidCtxt(schema);
 
         if (schemaCtxt == NULL) {
-            simpleError.type = LIBXML2_ERROR;
-            strcpy(simpleError.message, "Xml validation internal error");
-            errArr.data[errArr.len] = simpleError;
-            errArr.len++;
+            struct simpleXmlError simpleError = newSimpleXmlError(LIBXML2_ERROR, "Xml validation internal error");
+            if (simpleError.message == NULL || simpleError.node == NULL || simpleError.nodePath == NULL ||
+                !appendSimpleXmlError(&errArr, simpleError)) {
+                freeSimpleXmlError(&simpleError);
+            }
         } else {
             xmlSchemaSetValidStructuredErrors(schemaCtxt, simpleStructErrorCallback,
                                               &errArr);
@@ -358,12 +380,11 @@ errArray xsdValidateDoc(const xmlDocPtr doc, const xmlSchemaPtr schema) {
             xmlSchemaFreeValidCtxt(schemaCtxt);
 
             if (schemaErr < 0 && errArr.len == 0) {
-                simpleError.type = LIBXML2_ERROR;
-                strcpy(simpleError.message, "Xml validation internal error");
-                errArr.data[errArr.len] = simpleError;
-                errArr.len++;
-            } else {
-                freeSimpleXmlError(&simpleError);
+                struct simpleXmlError simpleError = newSimpleXmlError(LIBXML2_ERROR, "Xml validation internal error");
+                if (simpleError.message == NULL || simpleError.node == NULL || simpleError.nodePath == NULL ||
+                    !appendSimpleXmlError(&errArr, simpleError)) {
+                    freeSimpleXmlError(&simpleError);
+                }
             }
         }
     }
@@ -378,40 +399,32 @@ errArray xsdValidateBuf(const void* goXmlSource,
                         const xmlSchemaPtr schema) {
     errArray errArr = initErrArray();
 
-    struct simpleXmlError simpleError;
-    simpleError.message = calloc(GO_ERR_INIT, sizeof(char));
-    simpleError.node = calloc(GO_ERR_INIT, sizeof(char));
-    simpleError.nodePath = calloc(GO_ERR_INIT, sizeof(char));
-
     struct xmlParserResult parserResult =
     xsdValidateParseDoc(goXmlSource, goXmlSourceLen, xmlParserOptions);
 
     if (schema == NULL) {
-        simpleError.type = LIBXML2_ERROR;
-        const char msg[] = "Xsd schema null pointer";
-        strcpy(simpleError.message, msg);
-        errArr.data[errArr.len] = simpleError;
-        errArr.len++;
+        struct simpleXmlError simpleError = newSimpleXmlError(LIBXML2_ERROR, "Xsd schema null pointer");
+        if (simpleError.message == NULL || simpleError.node == NULL || simpleError.nodePath == NULL ||
+            !appendSimpleXmlError(&errArr, simpleError)) {
+            freeSimpleXmlError(&simpleError);
+        }
 
         xmlFreeDoc(parserResult.docPtr);
         free(parserResult.errorStr);
         errno = -1;
         return errArr;
     } else if (parserResult.docPtr == NULL) {
-        simpleError.type = XML_PARSER_ERROR;
-        free(simpleError.message);
-        simpleError.message = malloc(strlen(parserResult.errorStr) + 1);
-        strcpy(simpleError.message, parserResult.errorStr);
-        errArr.data[errArr.len] = simpleError;
-        errArr.len++;
+        struct simpleXmlError simpleError = newSimpleXmlError(XML_PARSER_ERROR, parserResult.errorStr);
+        if (simpleError.message == NULL || simpleError.node == NULL || simpleError.nodePath == NULL ||
+            !appendSimpleXmlError(&errArr, simpleError)) {
+            freeSimpleXmlError(&simpleError);
+        }
 
         xmlFreeDoc(parserResult.docPtr);
         free(parserResult.errorStr);
         errno = -1;
         return errArr;
     }
-    freeSimpleXmlError(&simpleError);
-    xsdValidateFreeErrArray(&errArr);
     free(parserResult.errorStr);
 
     errArray valErrArr = xsdValidateDoc(parserResult.docPtr, schema);
