@@ -33,11 +33,17 @@ func libXml2Cleanup() {
 	C.xsdValidateCleanup()
 }
 
+func byteSlicePtr(b []byte) unsafe.Pointer {
+	if len(b) == 0 {
+		return nil
+	}
+	return unsafe.Pointer(&b[0])
+}
+
 // The helper function for parsing xml
 func parseXmlMem(inXml []byte, options Options) (C.xmlDocPtr, error) {
-	strXml := C.CBytes(inXml)
-	defer C.free(unsafe.Pointer(strXml))
-	pRes, err := C.xsdValidateParseDoc(strXml, C.int(len(inXml)), C.short(options))
+	pRes, err := C.xsdValidateParseDoc(byteSlicePtr(inXml), C.int(len(inXml)), C.short(options))
+	runtime.KeepAlive(inXml)
 
 	defer C.free(unsafe.Pointer(pRes.errorStr))
 	if err != nil {
@@ -63,10 +69,8 @@ func parseUrlSchema(url string, options Options) (C.xmlSchemaPtr, error) {
 
 // The helper function for parsing an in-memory schema
 func parseMemSchema(xsd []byte, options Options) (C.xmlSchemaPtr, error) {
-	strXsd := C.CBytes(xsd)
-	defer C.free(unsafe.Pointer(strXsd))
-
-	pRes, err := C.xsdValidateParseMemSchema(strXsd, C.int(len(xsd)), C.short(options))
+	pRes, err := C.xsdValidateParseMemSchema(byteSlicePtr(xsd), C.int(len(xsd)), C.short(options))
+	runtime.KeepAlive(xsd)
 	defer C.free(unsafe.Pointer(pRes.errorStr))
 	if err != nil {
 		rStr := C.GoString(pRes.errorStr)
@@ -115,9 +119,8 @@ func validateWithXsd(xmlHandler *XmlHandler, xsdHandler *XsdHandler) error {
 
 // Helper function for validating given an xml byte slice
 func validateBufWithXsd(inXml []byte, options Options, xsdHandler *XsdHandler) error {
-	strXml := C.CBytes(inXml)
-	defer C.free(unsafe.Pointer(strXml))
-	sErr, err := C.xsdValidateBuf(strXml, C.int(len(inXml)), C.short(options), xsdHandler.schemaPtr)
+	sErr, err := C.xsdValidateBuf(byteSlicePtr(inXml), C.int(len(inXml)), C.short(options), xsdHandler.schemaPtr)
+	runtime.KeepAlive(inXml)
 	defer C.xsdValidateFreeErrArray(&sErr)
 	if err != nil {
 		errSlice, sliceErr := simpleXmlErrorSlice(sErr)
