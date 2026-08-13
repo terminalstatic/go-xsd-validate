@@ -137,6 +137,71 @@ static void testValidateBufMultipleErrors(xmlSchemaPtr schema) {
     xsdValidateFreeErrArray(&errArr);
 }
 
+static char* makeHugeXml(int* len) {
+    const int depth = 300;
+    const size_t textLen = 10 * 1024 * 1024 + 1;
+    const char prefix[] = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><root>";
+    const char dataOpen[] = "<data>";
+    const char dataClose[] = "</data>";
+    const char suffix[] = "</root>";
+    const size_t total = strlen(prefix) + (size_t)depth * strlen("<a>") +
+                         strlen(dataOpen) + textLen + strlen(dataClose) +
+                         (size_t)depth * strlen("</a>") + strlen(suffix);
+
+    char* xml = malloc(total + 1);
+    if (xml == NULL) {
+        fail("failed to allocate huge XML buffer");
+    }
+
+    char* p = xml;
+    memcpy(p, prefix, strlen(prefix));
+    p += strlen(prefix);
+    for (int i = 0; i < depth; i++) {
+        memcpy(p, "<a>", strlen("<a>"));
+        p += strlen("<a>");
+    }
+    memcpy(p, dataOpen, strlen(dataOpen));
+    p += strlen(dataOpen);
+    memset(p, 'A', textLen);
+    p += textLen;
+    memcpy(p, dataClose, strlen(dataClose));
+    p += strlen(dataClose);
+    for (int i = 0; i < depth; i++) {
+        memcpy(p, "</a>", strlen("</a>"));
+        p += strlen("</a>");
+    }
+    memcpy(p, suffix, strlen(suffix));
+    p += strlen(suffix);
+    *p = '\0';
+
+    *len = (int)total;
+    return xml;
+}
+
+static void testParseHugeXml(void) {
+    int len = 0;
+    char* xml = makeHugeXml(&len);
+
+    struct xmlParserResult defaultDoc = xsdValidateParseDoc(xml, len, P_ERR_DEFAULT);
+    if (defaultDoc.docPtr != NULL) {
+        xmlFreeDoc(defaultDoc.docPtr);
+        free(defaultDoc.errorStr);
+        free(xml);
+        fail("expected huge XML parsing without P_XML_HUGE to fail");
+    }
+    free(defaultDoc.errorStr);
+
+    struct xmlParserResult hugeDoc = xsdValidateParseDoc(xml, len, P_XML_HUGE);
+    free(xml);
+    if (hugeDoc.docPtr == NULL) {
+        fprintf(stderr, "huge XML parse failed: %s\n", hugeDoc.errorStr == NULL ? "" : hugeDoc.errorStr);
+        free(hugeDoc.errorStr);
+        exit(1);
+    }
+    xmlFreeDoc(hugeDoc.docPtr);
+    free(hugeDoc.errorStr);
+}
+
 static void testMalformedXml(xmlSchemaPtr schema) {
     const char xml[] = "<order>";
     errArray errArr = xsdValidateBuf(xml, (int)strlen(xml), P_ERR_DEFAULT, schema);
@@ -179,6 +244,7 @@ int main(void) {
     testValidateBufNodePath(schema);
     testValidateBufMultipleErrors(schema);
     testMalformedXml(schema);
+    testParseHugeXml();
     testNullBranches(schema);
     testRepeatedValidation(schema);
     xmlSchemaFree(schema);

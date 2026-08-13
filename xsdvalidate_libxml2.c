@@ -259,6 +259,16 @@ struct xsdParserResult xsdValidateParseMemSchema(const void* xsd,
     return parseSchema(schemaParserCtxt, options);
 }
 
+static int getLibxmlOptions(short int options) {
+    int xmlParserOptions = 0;
+
+    if (options & P_XML_HUGE) {
+        xmlParserOptions |= XML_PARSE_HUGE;
+    }
+
+    return xmlParserOptions;
+}
+
 struct xmlParserResult xsdValidateParseDoc(const void* goXmlSource,
                                           const int goXmlSourceLen,
                                           const short int options) {
@@ -292,7 +302,8 @@ struct xmlParserResult xsdValidateParseDoc(const void* goXmlSource,
                 xmlSetGenericErrorFunc(NULL, noOutputCallback);
             }
 
-            doc = xmlReadMemory(goXmlSource, goXmlSourceLen, NULL, NULL, 0);
+            int xmlParserOptions = getLibxmlOptions(options);
+            doc = xmlCtxtReadMemory(xmlParserCtxt, goXmlSource, goXmlSourceLen, NULL, NULL, xmlParserOptions);
 
             xmlFreeParserCtxt(xmlParserCtxt);
             if (doc == NULL) {

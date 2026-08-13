@@ -8,6 +8,7 @@
 #define GO_ERR_INIT 1024
 #define P_ERR_DEFAULT 1
 #define P_ERR_VERBOSE 2
+#define P_XML_HUGE 4
 
 struct xsdParserResult {
     xmlSchemaPtr schemaPtr;
