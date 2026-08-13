@@ -13,6 +13,7 @@ package xsdvalidate
 #define GO_ERR_INIT 1024
 #define P_ERR_DEFAULT 1
 #define P_ERR_VERBOSE 2
+#define P_XML_HUGE 4
 #define LIBXML_STATIC
 #define NOOP ((void)0)
 
@@ -249,6 +250,16 @@ static struct xsdParserResult cParseMemSchema(const void* xsd,
     return parseSchema(schemaParserCtxt, options);
 }
 
+static int getLibxmlOptions(short int options) {
+    int xmlParserOptions = 0;
+
+    if (options & P_XML_HUGE) {
+        xmlParserOptions |= XML_PARSE_HUGE;
+    }
+
+    return xmlParserOptions;
+}
+
 static struct xmlParserResult cParseDoc(const void* goXmlSource,
                                         const int goXmlSourceLen,
                                         const short int options) {
@@ -282,7 +293,8 @@ static struct xmlParserResult cParseDoc(const void* goXmlSource,
                 xmlSetGenericErrorFunc(NULL, noOutputCallback);
             }
 
-            doc = xmlReadMemory(goXmlSource, goXmlSourceLen, NULL, NULL, 0);
+            int xmlParserOptions = getLibxmlOptions(options);
+            doc = xmlCtxtReadMemory(xmlParserCtxt, goXmlSource, goXmlSourceLen, NULL, NULL, xmlParserOptions);
 
             xmlFreeParserCtxt(xmlParserCtxt);
             if (doc == NULL) {
