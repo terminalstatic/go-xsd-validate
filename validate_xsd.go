@@ -40,6 +40,7 @@ type Options uint8
 const (
 	ParsErrDefault Options = 1 << iota // Default parser error output
 	ParsErrVerbose                     // Verbose parser error output, considerably slower!
+	ParsXmlHuge                        // Enable XML_PARSE_HUGE. Disables libxml2 parser safety limits; use only for trusted large XML.
 )
 
 // Validation options for possible future enhancements.

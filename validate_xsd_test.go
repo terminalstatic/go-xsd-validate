@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -82,6 +83,29 @@ func TestXmlMemHandlerFail(t *testing.T) {
 		t.Fail()
 	} else {
 		fmt.Printf("Error OK:\n%s %s\n", t.Name(), err.Error())
+	}
+	defer handler.Free()
+}
+
+func TestXmlMemHandlerLargeXml(t *testing.T) {
+	Init()
+	defer Cleanup()
+
+	inXml := []byte(`<?xml version="1.0" encoding="UTF-8"?><root>` +
+		strings.Repeat("<a>", 300) +
+		`<data>` + strings.Repeat("A", 10*1024*1024+1) + `</data>` +
+		strings.Repeat("</a>", 300) +
+		`</root>`)
+
+	handler, err := NewXmlHandlerMem(inXml, ParsErrDefault)
+	if err == nil {
+		defer handler.Free()
+		t.Fatal("expected parsing huge XML without ParsXmlHuge to fail")
+	}
+
+	handler, err = NewXmlHandlerMem(inXml, ParsXmlHuge)
+	if err != nil {
+		t.Fatalf("expected parsing huge XML with ParsXmlHuge to succeed: %v", err)
 	}
 	defer handler.Free()
 }
